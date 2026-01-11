@@ -83,9 +83,41 @@ DEFAULT_COST = {"input": 5.00, "output": 15.00}
 PROFILES_DIR = Path.home() / ".config" / "adversarial-spec" / "profiles"
 SESSIONS_DIR = Path.home() / ".config" / "adversarial-spec" / "sessions"
 CHECKPOINTS_DIR = Path.cwd() / ".adversarial-spec-checkpoints"
+GLOBAL_CONFIG_PATH = Path.home() / ".claude" / "adversarial-spec" / "config.json"
 
 MAX_RETRIES = 3
 RETRY_BASE_DELAY = 1.0  # seconds
+
+# Bedrock model mapping: friendly names -> Bedrock model IDs
+BEDROCK_MODEL_MAP = {
+    # Anthropic Claude models
+    "claude-3-sonnet": "anthropic.claude-3-sonnet-20240229-v1:0",
+    "claude-3-haiku": "anthropic.claude-3-haiku-20240307-v1:0",
+    "claude-3-opus": "anthropic.claude-3-opus-20240229-v1:0",
+    "claude-3.5-sonnet": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+    "claude-3.5-sonnet-v2": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+    "claude-3.5-haiku": "anthropic.claude-3-5-haiku-20241022-v1:0",
+    # Meta Llama models
+    "llama-3-8b": "meta.llama3-8b-instruct-v1:0",
+    "llama-3-70b": "meta.llama3-70b-instruct-v1:0",
+    "llama-3.1-8b": "meta.llama3-1-8b-instruct-v1:0",
+    "llama-3.1-70b": "meta.llama3-1-70b-instruct-v1:0",
+    "llama-3.1-405b": "meta.llama3-1-405b-instruct-v1:0",
+    # Mistral models
+    "mistral-7b": "mistral.mistral-7b-instruct-v0:2",
+    "mistral-large": "mistral.mistral-large-2402-v1:0",
+    "mixtral-8x7b": "mistral.mixtral-8x7b-instruct-v0:1",
+    # Amazon Titan models
+    "titan-text-express": "amazon.titan-text-express-v1",
+    "titan-text-lite": "amazon.titan-text-lite-v1",
+    # Cohere models
+    "cohere-command": "cohere.command-text-v14",
+    "cohere-command-light": "cohere.command-light-text-v14",
+    "cohere-command-r": "cohere.command-r-v1:0",
+    "cohere-command-r-plus": "cohere.command-r-plus-v1:0",
+    # AI21 models
+    "ai21-jamba": "ai21.jamba-instruct-v1:0",
+}
 
 PRESERVE_INTENT_PROMPT = """
 **PRESERVE ORIGINAL INTENT**
@@ -531,6 +563,102 @@ def load_context_files(context_paths: list[str]) -> str:
     return "## Additional Context\nThe following documents are provided as context:\n\n" + "\n\n".join(sections)
 
 
+def load_global_config() -> dict:
+    """Load global config from ~/.claude/adversarial-spec/config.json."""
+    if not GLOBAL_CONFIG_PATH.exists():
+        return {}
+    try:
+        return json.loads(GLOBAL_CONFIG_PATH.read_text())
+    except json.JSONDecodeError as e:
+        print(f"Warning: Invalid JSON in global config: {e}", file=sys.stderr)
+        return {}
+
+
+def save_global_config(config: dict):
+    """Save global config to ~/.claude/adversarial-spec/config.json."""
+    GLOBAL_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    GLOBAL_CONFIG_PATH.write_text(json.dumps(config, indent=2))
+
+
+def is_bedrock_enabled() -> bool:
+    """Check if Bedrock mode is enabled in global config."""
+    config = load_global_config()
+    return config.get("bedrock", {}).get("enabled", False)
+
+
+def get_bedrock_config() -> dict:
+    """Get Bedrock configuration from global config."""
+    config = load_global_config()
+    return config.get("bedrock", {})
+
+
+def resolve_bedrock_model(friendly_name: str, config: Optional[dict] = None) -> Optional[str]:
+    """
+    Resolve a friendly model name to a Bedrock model ID.
+
+    Checks in order:
+    1. If already a full Bedrock ID (contains '.'), return as-is
+    2. Built-in BEDROCK_MODEL_MAP
+    3. Custom aliases in config
+
+    Returns None if not found.
+    """
+    # If it looks like a full Bedrock ID, return as-is
+    if "." in friendly_name and not friendly_name.startswith("bedrock/"):
+        return friendly_name
+
+    # Check built-in map
+    if friendly_name in BEDROCK_MODEL_MAP:
+        return BEDROCK_MODEL_MAP[friendly_name]
+
+    # Check custom aliases in config
+    if config is None:
+        config = get_bedrock_config()
+    custom_aliases = config.get("custom_aliases", {})
+    if friendly_name in custom_aliases:
+        return custom_aliases[friendly_name]
+
+    return None
+
+
+def validate_bedrock_models(models: list[str], config: Optional[dict] = None) -> tuple[list[str], list[str]]:
+    """
+    Validate that requested models are available in Bedrock config.
+
+    Returns (valid_models, invalid_models) where valid_models are resolved to Bedrock IDs.
+    """
+    if config is None:
+        config = get_bedrock_config()
+
+    available = config.get("available_models", [])
+    valid = []
+    invalid = []
+
+    for model in models:
+        # Check if model is in available list (by friendly name or full ID)
+        if model in available:
+            resolved = resolve_bedrock_model(model, config)
+            if resolved:
+                valid.append(resolved)
+            else:
+                invalid.append(model)
+        else:
+            # Also check if it's a full Bedrock ID that matches an available friendly name
+            resolved = resolve_bedrock_model(model, config)
+            if resolved:
+                # Check if the friendly name version is available
+                for avail in available:
+                    if resolve_bedrock_model(avail, config) == resolved:
+                        valid.append(resolved)
+                        break
+                else:
+                    invalid.append(model)
+            else:
+                invalid.append(model)
+
+    return valid, invalid
+
+
 def load_profile(profile_name: str) -> dict:
     profile_path = PROFILES_DIR / f"{profile_name}.json"
     if not profile_path.exists():
@@ -591,9 +719,21 @@ def call_single_model(
     focus: Optional[str] = None,
     persona: Optional[str] = None,
     context: Optional[str] = None,
-    preserve_intent: bool = False
+    preserve_intent: bool = False,
+    bedrock_mode: bool = False,
+    bedrock_region: Optional[str] = None
 ) -> ModelResponse:
     """Send spec to a single model and return response with retry on failure."""
+    # Handle Bedrock routing
+    actual_model = model
+    if bedrock_mode:
+        # Set AWS region if specified
+        if bedrock_region:
+            os.environ["AWS_REGION"] = bedrock_region
+        # Prepend bedrock/ prefix for LiteLLM
+        if not model.startswith("bedrock/"):
+            actual_model = f"bedrock/{model}"
+
     system_prompt = get_system_prompt(doc_type, persona)
     doc_type_name = get_doc_type_name(doc_type)
 
@@ -618,10 +758,12 @@ def call_single_model(
     )
 
     last_error = None
+    display_model = model  # Use original name for display, actual_model for API calls
+
     for attempt in range(MAX_RETRIES):
         try:
             response = completion(
-                model=model,
+                model=actual_model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
@@ -635,14 +777,16 @@ def call_single_model(
 
             # Validation warning if model critiqued but didn't provide revised spec
             if not agreed and not extracted:
-                print(f"Warning: {model} provided critique but no [SPEC] tags found. Response may be malformed.", file=sys.stderr)
+                print(f"Warning: {display_model} provided critique but no [SPEC] tags found. Response may be malformed.", file=sys.stderr)
 
             input_tokens = response.usage.prompt_tokens if response.usage else 0
             output_tokens = response.usage.completion_tokens if response.usage else 0
-            cost = cost_tracker.add(model, input_tokens, output_tokens)
+
+            # Use display_model for cost tracking (maintains consistent naming)
+            cost = cost_tracker.add(display_model, input_tokens, output_tokens)
 
             return ModelResponse(
-                model=model,
+                model=display_model,
                 response=content,
                 agreed=agreed,
                 spec=extracted,
@@ -652,14 +796,21 @@ def call_single_model(
             )
         except Exception as e:
             last_error = str(e)
+            # Detect Bedrock-specific errors for better messaging
+            if bedrock_mode:
+                if "AccessDeniedException" in last_error:
+                    last_error = f"Model not enabled in your Bedrock account: {display_model}"
+                elif "ValidationException" in last_error:
+                    last_error = f"Invalid Bedrock model ID: {display_model}"
+
             if attempt < MAX_RETRIES - 1:
                 delay = RETRY_BASE_DELAY * (2 ** attempt)  # exponential backoff
-                print(f"Warning: {model} failed (attempt {attempt + 1}/{MAX_RETRIES}): {last_error}. Retrying in {delay:.1f}s...", file=sys.stderr)
+                print(f"Warning: {display_model} failed (attempt {attempt + 1}/{MAX_RETRIES}): {last_error}. Retrying in {delay:.1f}s...", file=sys.stderr)
                 time.sleep(delay)
             else:
-                print(f"Error: {model} failed after {MAX_RETRIES} attempts: {last_error}", file=sys.stderr)
+                print(f"Error: {display_model} failed after {MAX_RETRIES} attempts: {last_error}", file=sys.stderr)
 
-    return ModelResponse(model=model, response="", agreed=False, spec=None, error=last_error)
+    return ModelResponse(model=display_model, response="", agreed=False, spec=None, error=last_error)
 
 
 def call_models_parallel(
@@ -671,14 +822,17 @@ def call_models_parallel(
     focus: Optional[str] = None,
     persona: Optional[str] = None,
     context: Optional[str] = None,
-    preserve_intent: bool = False
+    preserve_intent: bool = False,
+    bedrock_mode: bool = False,
+    bedrock_region: Optional[str] = None
 ) -> list[ModelResponse]:
     """Call multiple models in parallel and collect responses."""
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(models)) as executor:
         future_to_model = {
             executor.submit(
-                call_single_model, model, spec, round_num, doc_type, press, focus, persona, context, preserve_intent
+                call_single_model, model, spec, round_num, doc_type, press, focus, persona, context, preserve_intent,
+                bedrock_mode, bedrock_region
             ): model
             for model in models
         }
@@ -780,6 +934,27 @@ def generate_diff(previous: str, current: str) -> str:
 
 
 def list_providers():
+    # Show Bedrock status first if configured
+    bedrock_config = get_bedrock_config()
+    if bedrock_config.get("enabled"):
+        print("AWS Bedrock (Active):\n")
+        print(f"  Status:  ENABLED - All models route through Bedrock")
+        print(f"  Region:  {bedrock_config.get('region', 'not set')}")
+        available = bedrock_config.get("available_models", [])
+        print(f"  Models:  {', '.join(available) if available else '(none configured)'}")
+
+        # Check AWS credentials
+        aws_creds = bool(
+            os.environ.get("AWS_ACCESS_KEY_ID") or
+            os.environ.get("AWS_PROFILE") or
+            os.environ.get("AWS_ROLE_ARN")
+        )
+        print(f"  AWS Credentials: {'[available]' if aws_creds else '[not detected]'}")
+        print()
+        print("  Run 'python3 debate.py bedrock status' for full Bedrock configuration.")
+        print("  Run 'python3 debate.py bedrock disable' to use direct API keys instead.\n")
+        print("-" * 60 + "\n")
+
     providers = [
         ("OpenAI", "OPENAI_API_KEY", "gpt-4o, gpt-4-turbo, o1"),
         ("Anthropic", "ANTHROPIC_API_KEY", "claude-sonnet-4-20250514, claude-opus-4-20250514"),
@@ -790,11 +965,22 @@ def list_providers():
         ("Together", "TOGETHER_API_KEY", "together_ai/meta-llama/Llama-3-70b"),
         ("Deepseek", "DEEPSEEK_API_KEY", "deepseek/deepseek-chat"),
     ]
-    print("Supported providers:\n")
+
+    if bedrock_config.get("enabled"):
+        print("Direct API Providers (inactive while Bedrock is enabled):\n")
+    else:
+        print("Supported providers:\n")
+
     for name, key, models in providers:
         status = "[set]" if os.environ.get(key) else "[not set]"
         print(f"  {name:12} {key:24} {status}")
         print(f"             Example models: {models}")
+        print()
+
+    # Show Bedrock option if not enabled
+    if not bedrock_config.get("enabled"):
+        print("AWS Bedrock:\n")
+        print("  Not configured. Enable with: python3 debate.py bedrock enable --region us-east-1")
         print()
 
 
@@ -901,6 +1087,146 @@ Final document:
         return False
 
 
+def handle_bedrock_command(subcommand: str, arg: Optional[str], region: Optional[str]):
+    """Handle bedrock subcommands: status, enable, disable, add-model, remove-model, alias."""
+    config = load_global_config()
+    bedrock = config.get("bedrock", {})
+
+    if subcommand == "status":
+        print("Bedrock Configuration:\n")
+        if not bedrock:
+            print("  Status: Not configured")
+            print(f"\n  Config path: {GLOBAL_CONFIG_PATH}")
+            print("\n  To enable: python3 debate.py bedrock enable --region us-east-1")
+            return
+
+        enabled = bedrock.get("enabled", False)
+        print(f"  Status: {'Enabled' if enabled else 'Disabled'}")
+        print(f"  Region: {bedrock.get('region', 'not set')}")
+        print(f"  Config path: {GLOBAL_CONFIG_PATH}")
+
+        available = bedrock.get("available_models", [])
+        print(f"\n  Available models ({len(available)}):")
+        if available:
+            for model in available:
+                resolved = resolve_bedrock_model(model, bedrock)
+                if resolved and resolved != model:
+                    print(f"    - {model} -> {resolved}")
+                else:
+                    print(f"    - {model}")
+        else:
+            print("    (none configured)")
+            print("\n    Add models with: python3 debate.py bedrock add-model claude-3-sonnet")
+
+        aliases = bedrock.get("custom_aliases", {})
+        if aliases:
+            print(f"\n  Custom aliases ({len(aliases)}):")
+            for alias, target in aliases.items():
+                print(f"    - {alias} -> {target}")
+
+        # Show available friendly names
+        print(f"\n  Built-in model mappings ({len(BEDROCK_MODEL_MAP)}):")
+        for name in sorted(BEDROCK_MODEL_MAP.keys())[:5]:
+            print(f"    - {name}")
+        if len(BEDROCK_MODEL_MAP) > 5:
+            print(f"    ... and {len(BEDROCK_MODEL_MAP) - 5} more")
+
+    elif subcommand == "enable":
+        if not region:
+            print("Error: --region is required for 'bedrock enable'", file=sys.stderr)
+            print("Example: python3 debate.py bedrock enable --region us-east-1", file=sys.stderr)
+            sys.exit(1)
+
+        bedrock["enabled"] = True
+        bedrock["region"] = region
+        if "available_models" not in bedrock:
+            bedrock["available_models"] = []
+        if "custom_aliases" not in bedrock:
+            bedrock["custom_aliases"] = {}
+
+        config["bedrock"] = bedrock
+        save_global_config(config)
+        print(f"Bedrock mode enabled (region: {region})")
+        print(f"Config saved to: {GLOBAL_CONFIG_PATH}")
+
+        if not bedrock.get("available_models"):
+            print("\nNext: Add models with: python3 debate.py bedrock add-model claude-3-sonnet")
+
+    elif subcommand == "disable":
+        bedrock["enabled"] = False
+        config["bedrock"] = bedrock
+        save_global_config(config)
+        print("Bedrock mode disabled")
+
+    elif subcommand == "add-model":
+        if not arg:
+            print("Error: Model name required for 'bedrock add-model'", file=sys.stderr)
+            print("Example: python3 debate.py bedrock add-model claude-3-sonnet", file=sys.stderr)
+            sys.exit(1)
+
+        # Validate model name
+        resolved = resolve_bedrock_model(arg, bedrock)
+        if not resolved:
+            print(f"Warning: '{arg}' is not a known Bedrock model. Adding anyway.", file=sys.stderr)
+            print("Use 'python3 debate.py bedrock alias' to map it to a Bedrock model ID.", file=sys.stderr)
+
+        available = bedrock.get("available_models", [])
+        if arg in available:
+            print(f"Model '{arg}' is already in the available list")
+            return
+
+        available.append(arg)
+        bedrock["available_models"] = available
+        config["bedrock"] = bedrock
+        save_global_config(config)
+
+        if resolved:
+            print(f"Added model: {arg} -> {resolved}")
+        else:
+            print(f"Added model: {arg}")
+
+    elif subcommand == "remove-model":
+        if not arg:
+            print("Error: Model name required for 'bedrock remove-model'", file=sys.stderr)
+            sys.exit(1)
+
+        available = bedrock.get("available_models", [])
+        if arg not in available:
+            print(f"Model '{arg}' is not in the available list", file=sys.stderr)
+            sys.exit(1)
+
+        available.remove(arg)
+        bedrock["available_models"] = available
+        config["bedrock"] = bedrock
+        save_global_config(config)
+        print(f"Removed model: {arg}")
+
+    elif subcommand == "alias":
+        if not arg:
+            print("Error: Alias name and target required for 'bedrock alias'", file=sys.stderr)
+            print("Example: python3 debate.py bedrock alias mymodel anthropic.claude-3-sonnet-20240229-v1:0", file=sys.stderr)
+            sys.exit(1)
+
+        # arg contains the alias name, we need to get the target from somewhere
+        # Since argparse only gives us one extra arg, we need to parse it differently
+        # For now, expect format: "alias_name bedrock_model_id" in profile_name and bedrock_arg
+        print("Error: 'bedrock alias' requires two arguments: alias_name and model_id", file=sys.stderr)
+        print("Example: python3 debate.py bedrock alias mymodel anthropic.claude-3-sonnet-20240229-v1:0", file=sys.stderr)
+        print("\nAlternatively, edit the config file directly:", file=sys.stderr)
+        print(f"  {GLOBAL_CONFIG_PATH}", file=sys.stderr)
+        sys.exit(1)
+
+    elif subcommand == "list-models":
+        print("Built-in Bedrock model mappings:\n")
+        for name, bedrock_id in sorted(BEDROCK_MODEL_MAP.items()):
+            print(f"  {name:25} -> {bedrock_id}")
+
+    else:
+        print(f"Unknown bedrock subcommand: {subcommand}", file=sys.stderr)
+        print("Available subcommands: status, enable, disable, add-model, remove-model, alias, list-models", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Adversarial spec debate with multiple LLMs",
@@ -920,14 +1246,22 @@ Examples:
   python3 debate.py profiles
   python3 debate.py save-profile myprofile --models gpt-4o,gemini/gemini-2.0-flash --focus security
 
+Bedrock commands:
+  python3 debate.py bedrock status                           # Show Bedrock config
+  python3 debate.py bedrock enable --region us-east-1        # Enable Bedrock mode
+  python3 debate.py bedrock disable                          # Disable Bedrock mode
+  python3 debate.py bedrock add-model claude-3-sonnet        # Add model to available list
+  python3 debate.py bedrock remove-model claude-3-haiku      # Remove model from list
+  python3 debate.py bedrock alias mymodel anthropic.claude-3-sonnet-20240229-v1:0  # Add custom alias
+
 Document types:
   prd   - Product Requirements Document (business/product focus)
   tech  - Technical Specification / Architecture Document (engineering focus)
         """
     )
-    parser.add_argument("action", choices=["critique", "providers", "send-final", "diff", "export-tasks", "focus-areas", "personas", "profiles", "save-profile", "sessions"],
+    parser.add_argument("action", choices=["critique", "providers", "send-final", "diff", "export-tasks", "focus-areas", "personas", "profiles", "save-profile", "sessions", "bedrock"],
                         help="Action to perform")
-    parser.add_argument("profile_name", nargs="?", help="Profile name (for save-profile action)")
+    parser.add_argument("profile_name", nargs="?", help="Profile name (for save-profile action) or bedrock subcommand")
     parser.add_argument("--models", "-m", default="gpt-4o",
                         help="Comma-separated list of models (e.g., gpt-4o,gemini/gemini-2.0-flash,xai/grok-3)")
     parser.add_argument("--doc-type", "-d", choices=["prd", "tech"], default="tech",
@@ -964,6 +1298,11 @@ Document types:
                         help="Session ID for state persistence (enables checkpointing and resume)")
     parser.add_argument("--resume",
                         help="Resume a previous session by ID")
+    # Bedrock-specific arguments
+    parser.add_argument("--region",
+                        help="AWS region for Bedrock (e.g., us-east-1)")
+    parser.add_argument("bedrock_arg", nargs="?",
+                        help="Additional argument for bedrock subcommands (model name or alias target)")
     args = parser.parse_args()
 
     # Handle simple info commands
@@ -996,6 +1335,13 @@ Document types:
                 print(f"    round: {s['round']}, type: {s['doc_type']}")
                 print(f"    updated: {s['updated_at'][:19] if s['updated_at'] else 'unknown'}")
                 print()
+        return
+
+    if args.action == "bedrock":
+        subcommand = args.profile_name  # First positional arg after 'bedrock'
+        if not subcommand:
+            subcommand = "status"  # Default to status if no subcommand given
+        handle_bedrock_command(subcommand, args.bedrock_arg, args.region)
         return
 
     if args.action == "save-profile":
@@ -1054,6 +1400,35 @@ Document types:
 
     # Load context files
     context = load_context_files(args.context) if args.context else None
+
+    # Check Bedrock mode and validate/resolve models
+    bedrock_config = get_bedrock_config()
+    bedrock_mode = bedrock_config.get("enabled", False)
+    bedrock_region = bedrock_config.get("region")
+
+    if bedrock_mode and args.action == "critique":
+        available = bedrock_config.get("available_models", [])
+        if not available:
+            print("Error: Bedrock mode is enabled but no models are configured.", file=sys.stderr)
+            print("Add models with: python3 debate.py bedrock add-model claude-3-sonnet", file=sys.stderr)
+            print("Or disable Bedrock: python3 debate.py bedrock disable", file=sys.stderr)
+            sys.exit(2)
+
+        # Validate requested models against available list
+        valid_models, invalid_models = validate_bedrock_models(models, bedrock_config)
+
+        if invalid_models:
+            print(f"Error: The following models are not available in your Bedrock configuration:", file=sys.stderr)
+            for m in invalid_models:
+                print(f"  - {m}", file=sys.stderr)
+            print(f"\nAvailable models: {', '.join(available)}", file=sys.stderr)
+            print("Add models with: python3 debate.py bedrock add-model <model>", file=sys.stderr)
+            print("Or disable Bedrock: python3 debate.py bedrock disable", file=sys.stderr)
+            sys.exit(2)
+
+        # Replace model names with resolved Bedrock IDs
+        models = valid_models
+        print(f"Bedrock mode: routing through AWS Bedrock ({bedrock_region})", file=sys.stderr)
 
     if args.action == "send-final":
         spec = sys.stdin.read().strip()
@@ -1154,7 +1529,8 @@ Document types:
 
     results = call_models_parallel(
         models, spec, args.round, args.doc_type, args.press,
-        args.focus, args.persona, context, args.preserve_intent
+        args.focus, args.persona, context, args.preserve_intent,
+        bedrock_mode, bedrock_region
     )
 
     errors = [r for r in results if r.error]

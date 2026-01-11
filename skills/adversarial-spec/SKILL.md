@@ -13,7 +13,7 @@ Generate and refine specifications through iterative debate with multiple LLMs u
 ## Requirements
 
 - Python 3.10+ with `litellm` package installed
-- API key for at least one provider (set via environment variable)
+- API key for at least one provider (set via environment variable), OR AWS Bedrock configured
 
 ## Supported Providers
 
@@ -28,6 +28,61 @@ Generate and refine specifications through iterative debate with multiple LLMs u
 | Deepseek  | `DEEPSEEK_API_KEY`   | `deepseek/deepseek-chat`                    |
 
 Run `python3 ~/.claude/skills/adversarial-spec/scripts/debate.py providers` to see which keys are set.
+
+## AWS Bedrock Support
+
+For enterprise users who need to route all model calls through AWS Bedrock (e.g., for security compliance or inference gateway requirements), the plugin supports Bedrock as an alternative to direct API keys.
+
+**When Bedrock mode is enabled, ALL model calls route through Bedrock** - no direct API calls are made.
+
+### Bedrock Setup
+
+To enable Bedrock mode, use these CLI commands (Claude can invoke these when the user requests Bedrock setup):
+
+```bash
+# Enable Bedrock mode with a region
+python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock enable --region us-east-1
+
+# Add models that are enabled in your Bedrock account
+python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock add-model claude-3-sonnet
+python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock add-model claude-3-haiku
+
+# Check current configuration
+python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock status
+
+# Disable Bedrock mode (revert to direct API keys)
+python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock disable
+```
+
+### Bedrock Model Names
+
+Users can specify models using friendly names (e.g., `claude-3-sonnet`), which are automatically mapped to Bedrock model IDs. Built-in mappings include:
+
+- `claude-3-sonnet`, `claude-3-haiku`, `claude-3-opus`, `claude-3.5-sonnet`
+- `llama-3-8b`, `llama-3-70b`, `llama-3.1-70b`, `llama-3.1-405b`
+- `mistral-7b`, `mistral-large`, `mixtral-8x7b`
+- `cohere-command`, `cohere-command-r`, `cohere-command-r-plus`
+
+Run `python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock list-models` to see all mappings.
+
+### Bedrock Configuration Location
+
+Configuration is stored at `~/.claude/adversarial-spec/config.json`:
+
+```json
+{
+  "bedrock": {
+    "enabled": true,
+    "region": "us-east-1",
+    "available_models": ["claude-3-sonnet", "claude-3-haiku"],
+    "custom_aliases": {}
+  }
+}
+```
+
+### Bedrock Error Handling
+
+If a Bedrock model fails (e.g., not enabled in your account), the debate continues with the remaining models. Clear error messages indicate which models failed and why.
 
 ## Document Types
 

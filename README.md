@@ -71,6 +71,29 @@ Check which keys are configured:
 python3 ~/.claude/skills/adversarial-spec/scripts/debate.py providers
 ```
 
+## AWS Bedrock Support
+
+For enterprise users who need to route all model calls through AWS Bedrock (e.g., for security compliance or inference gateway requirements):
+
+```bash
+# Enable Bedrock mode
+python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock enable --region us-east-1
+
+# Add models enabled in your Bedrock account
+python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock add-model claude-3-sonnet
+python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock add-model claude-3-haiku
+
+# Check configuration
+python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock status
+
+# Disable Bedrock mode
+python3 ~/.claude/skills/adversarial-spec/scripts/debate.py bedrock disable
+```
+
+When Bedrock is enabled, **all model calls route through Bedrock** - no direct API calls are made. Use friendly names like `claude-3-sonnet` which are automatically mapped to Bedrock model IDs.
+
+Configuration is stored at `~/.claude/adversarial-spec/config.json`.
+
 ## Usage
 
 **Start from scratch:**
@@ -395,6 +418,14 @@ debate.py sessions       # List saved sessions
 
 # Profile management
 debate.py save-profile NAME --models ... [--focus ...] [--persona ...]
+
+# Bedrock management
+debate.py bedrock status                      # Show Bedrock configuration
+debate.py bedrock enable --region REGION      # Enable Bedrock mode
+debate.py bedrock disable                     # Disable Bedrock mode
+debate.py bedrock add-model MODEL             # Add model to available list
+debate.py bedrock remove-model MODEL          # Remove model from list
+debate.py bedrock list-models                 # List built-in model mappings
 ```
 
 **Options:**
