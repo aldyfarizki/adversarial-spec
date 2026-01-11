@@ -22,19 +22,19 @@ export OPENAI_API_KEY="sk-..."
 ## How It Works
 
 ```
-You describe product ─► Claude drafts spec ─► Multiple LLMs critique in parallel
-        │                                              │
-        │                                              ▼
-        │                              Claude synthesizes + adds own critique
-        │                                              │
-        │                                              ▼
-        │                              Revise and repeat until ALL agree
-        │                                              │
-        └─────────────────────────────────────────────►│
-                                                       ▼
+You describe product --> Claude drafts spec --> Multiple LLMs critique in parallel
+        |                                              |
+        |                                              v
+        |                              Claude synthesizes + adds own critique
+        |                                              |
+        |                                              v
+        |                              Revise and repeat until ALL agree
+        |                                              |
+        +--------------------------------------------->|
+                                                       v
                                             User review period
-                                                       │
-                                                       ▼
+                                                       |
+                                                       v
                                             Final document output
 ```
 
@@ -111,7 +111,7 @@ For developers and architects.
 
 **Critique focuses on:** Complete API contracts, data model coverage, security threat mitigation, error handling, specific performance targets, no ambiguity for engineers
 
-## Features
+## Core Features
 
 ### Interview Mode
 
@@ -178,6 +178,108 @@ Run multiple cycles with different strategies:
 
 When a PRD reaches consensus, you're offered the option to continue directly into a Technical Specification based on the PRD. This creates a complete documentation pair in a single session.
 
+## Advanced Features
+
+### Critique Focus Modes
+
+Direct models to prioritize specific concerns:
+
+```bash
+--focus security      # Auth, input validation, encryption, vulnerabilities
+--focus scalability   # Horizontal scaling, sharding, caching, capacity
+--focus performance   # Latency targets, throughput, query optimization
+--focus ux            # User journeys, error states, accessibility
+--focus reliability   # Failure modes, circuit breakers, disaster recovery
+--focus cost          # Infrastructure costs, resource efficiency
+```
+
+### Model Personas
+
+Have models critique from specific professional perspectives:
+
+```bash
+--persona security-engineer      # Thinks like an attacker
+--persona oncall-engineer        # Cares about debugging at 3am
+--persona junior-developer       # Flags ambiguity and tribal knowledge
+--persona qa-engineer            # Missing test scenarios
+--persona site-reliability       # Deployment, monitoring, incidents
+--persona product-manager        # User value, success metrics
+--persona data-engineer          # Data models, ETL implications
+--persona mobile-developer       # API design for mobile
+--persona accessibility-specialist  # WCAG, screen readers
+--persona legal-compliance       # GDPR, CCPA, regulatory
+```
+
+Custom personas also work: `--persona "fintech compliance officer"`
+
+### Context Injection
+
+Include existing documents for models to consider:
+
+```bash
+--context ./existing-api.md --context ./schema.sql
+```
+
+Use cases:
+- Existing API documentation the new spec must integrate with
+- Database schemas the spec must work with
+- Design documents or prior specs for consistency
+- Compliance requirements documents
+
+### Cost Tracking
+
+Every critique round displays token usage and estimated cost:
+
+```
+=== Cost Summary ===
+Total tokens: 12,543 in / 3,221 out
+Total cost: $0.0847
+
+By model:
+  gpt-4o: $0.0523 (8,234 in / 2,100 out)
+  gemini/gemini-2.0-flash: $0.0324 (4,309 in / 1,121 out)
+```
+
+### Saved Profiles
+
+Save frequently used configurations:
+
+```bash
+# Create a profile
+python3 debate.py save-profile strict-security \
+  --models gpt-4o,gemini/gemini-2.0-flash \
+  --focus security \
+  --doc-type tech
+
+# Use a profile
+python3 debate.py critique --profile strict-security < spec.md
+
+# List profiles
+python3 debate.py profiles
+```
+
+Profiles are stored in `~/.config/adversarial-spec/profiles/`.
+
+### Diff Between Rounds
+
+See exactly what changed between spec versions:
+
+```bash
+python3 debate.py diff --previous round1.md --current round2.md
+```
+
+### Export to Task List
+
+Extract actionable tasks from a finalized spec:
+
+```bash
+cat spec-output.md | python3 debate.py export-tasks --models gpt-4o --doc-type prd
+```
+
+Output includes title, type, priority, description, and acceptance criteria.
+
+Use `--json` for structured output suitable for importing into issue trackers.
+
 ## Telegram Integration (Optional)
 
 Get notified on your phone and inject feedback during the debate.
@@ -197,7 +299,7 @@ export TELEGRAM_CHAT_ID="..."
 
 **Features:**
 
-- Async notifications when rounds complete
+- Async notifications when rounds complete (includes cost)
 - 60-second window to reply with feedback (incorporated into next round)
 - Final document sent to Telegram when debate concludes
 
@@ -215,7 +317,36 @@ Output locations:
 - Written to `spec-output.md` (PRD) or `tech-spec-output.md` (tech spec)
 - Sent to Telegram (if enabled)
 
-Debate summary includes rounds completed, cycles run, models involved, Claude's contributions, and key refinements made.
+Debate summary includes rounds completed, cycles run, models involved, Claude's contributions, cost, and key refinements made.
+
+## CLI Reference
+
+```bash
+# Core commands
+debate.py critique --models MODEL_LIST --doc-type TYPE [OPTIONS] < spec.md
+debate.py diff --previous OLD.md --current NEW.md
+debate.py export-tasks --models MODEL --doc-type TYPE [--json] < spec.md
+
+# Info commands
+debate.py providers      # List providers and API key status
+debate.py focus-areas    # List focus areas
+debate.py personas       # List personas
+debate.py profiles       # List saved profiles
+
+# Profile management
+debate.py save-profile NAME --models ... [--focus ...] [--persona ...]
+```
+
+**Options:**
+- `--models, -m` - Comma-separated model list
+- `--doc-type, -d` - prd or tech
+- `--focus, -f` - Focus area (security, scalability, performance, ux, reliability, cost)
+- `--persona` - Professional persona
+- `--context, -c` - Context file (repeatable)
+- `--profile` - Load saved profile
+- `--press, -p` - Anti-laziness check
+- `--telegram, -t` - Enable Telegram
+- `--json, -j` - JSON output
 
 ## File Structure
 

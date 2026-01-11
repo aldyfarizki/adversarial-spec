@@ -468,3 +468,176 @@ After each round:
 - 60 seconds to reply with feedback (configurable via `--poll-timeout`)
 - Reply incorporated into next round
 - No reply = auto-continue
+
+## Advanced Features
+
+### Critique Focus Modes
+
+Direct models to prioritize specific concerns using `--focus`:
+
+```bash
+python3 debate.py critique --models gpt-4o --focus security --doc-type tech <<'SPEC_EOF'
+<spec here>
+SPEC_EOF
+```
+
+**Available focus areas:**
+- `security` - Authentication, authorization, input validation, encryption, vulnerabilities
+- `scalability` - Horizontal scaling, sharding, caching, load balancing, capacity planning
+- `performance` - Latency targets, throughput, query optimization, memory usage
+- `ux` - User journeys, error states, accessibility, mobile experience
+- `reliability` - Failure modes, circuit breakers, retries, disaster recovery
+- `cost` - Infrastructure costs, resource efficiency, build vs buy
+
+Run `python3 debate.py focus-areas` to see all options.
+
+### Model Personas
+
+Have models critique from specific professional perspectives using `--persona`:
+
+```bash
+python3 debate.py critique --models gpt-4o --persona "security-engineer" --doc-type tech <<'SPEC_EOF'
+<spec here>
+SPEC_EOF
+```
+
+**Available personas:**
+- `security-engineer` - Thinks like an attacker, paranoid about edge cases
+- `oncall-engineer` - Cares about observability, error messages, debugging at 3am
+- `junior-developer` - Flags ambiguity and tribal knowledge assumptions
+- `qa-engineer` - Identifies missing test scenarios and acceptance criteria
+- `site-reliability` - Focuses on deployment, monitoring, incident response
+- `product-manager` - Focuses on user value and success metrics
+- `data-engineer` - Focuses on data models and ETL implications
+- `mobile-developer` - API design from mobile perspective
+- `accessibility-specialist` - WCAG compliance, screen reader support
+- `legal-compliance` - GDPR, CCPA, regulatory requirements
+
+Run `python3 debate.py personas` to see all options.
+
+Custom personas also work: `--persona "fintech compliance officer"`
+
+### Context Injection
+
+Include existing documents as context for the critique using `--context`:
+
+```bash
+python3 debate.py critique --models gpt-4o --context ./existing-api.md --context ./schema.sql --doc-type tech <<'SPEC_EOF'
+<spec here>
+SPEC_EOF
+```
+
+Use cases:
+- Include existing API documentation that the new spec must integrate with
+- Include database schemas the spec must work with
+- Include design documents or prior specs for consistency
+- Include compliance requirements documents
+
+### Cost Tracking
+
+Every critique round displays token usage and estimated cost:
+
+```
+=== Cost Summary ===
+Total tokens: 12,543 in / 3,221 out
+Total cost: $0.0847
+
+By model:
+  gpt-4o: $0.0523 (8,234 in / 2,100 out)
+  gemini/gemini-2.0-flash: $0.0324 (4,309 in / 1,121 out)
+```
+
+Cost is also included in JSON output and Telegram notifications.
+
+### Saved Profiles
+
+Save frequently used configurations as profiles:
+
+**Create a profile:**
+```bash
+python3 debate.py save-profile strict-security --models gpt-4o,gemini/gemini-2.0-flash --focus security --doc-type tech
+```
+
+**Use a profile:**
+```bash
+python3 debate.py critique --profile strict-security <<'SPEC_EOF'
+<spec here>
+SPEC_EOF
+```
+
+**List profiles:**
+```bash
+python3 debate.py profiles
+```
+
+Profiles are stored in `~/.config/adversarial-spec/profiles/`.
+
+Profile settings can be overridden by explicit flags.
+
+### Diff Between Rounds
+
+Generate a unified diff between spec versions:
+
+```bash
+python3 debate.py diff --previous round1.md --current round2.md
+```
+
+Use this to see exactly what changed between rounds. Helpful for:
+- Understanding what feedback was incorporated
+- Reviewing changes before accepting
+- Documenting the evolution of the spec
+
+### Export to Task List
+
+Extract actionable tasks from a finalized spec:
+
+```bash
+cat spec-output.md | python3 debate.py export-tasks --models gpt-4o --doc-type prd
+```
+
+Output includes:
+- Title
+- Type (user-story, task, spike, bug)
+- Priority (high, medium, low)
+- Description
+- Acceptance criteria
+
+Use `--json` for structured output suitable for importing into issue trackers:
+
+```bash
+cat spec-output.md | python3 debate.py export-tasks --models gpt-4o --doc-type prd --json > tasks.json
+```
+
+## Script Reference
+
+```bash
+# Core commands
+python3 debate.py critique --models MODEL_LIST --doc-type TYPE [OPTIONS] < spec.md
+python3 debate.py diff --previous OLD.md --current NEW.md
+python3 debate.py export-tasks --models MODEL --doc-type TYPE [--json] < spec.md
+
+# Info commands
+python3 debate.py providers      # List supported providers and API key status
+python3 debate.py focus-areas    # List available focus areas
+python3 debate.py personas       # List available personas
+python3 debate.py profiles       # List saved profiles
+
+# Profile management
+python3 debate.py save-profile NAME --models ... [--focus ...] [--persona ...]
+
+# Telegram
+python3 debate.py send-final --models MODEL_LIST --doc-type TYPE --rounds N < spec.md
+```
+
+**Critique options:**
+- `--models, -m` - Comma-separated model list (default: gpt-4o)
+- `--doc-type, -d` - Document type: prd or tech (default: tech)
+- `--round, -r` - Current round number (default: 1)
+- `--focus, -f` - Focus area for critique
+- `--persona` - Professional persona for critique
+- `--context, -c` - Context file (can be used multiple times)
+- `--profile` - Load settings from saved profile
+- `--press, -p` - Anti-laziness check for early agreement
+- `--telegram, -t` - Enable Telegram notifications
+- `--poll-timeout` - Telegram reply timeout in seconds (default: 60)
+- `--json, -j` - Output as JSON
