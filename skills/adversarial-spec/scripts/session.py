@@ -14,6 +14,7 @@ CHECKPOINTS_DIR = Path.cwd() / ".adversarial-spec-checkpoints"
 @dataclass
 class SessionState:
     """Persisted state for resume functionality."""
+
     session_id: str
     spec: str
     round: int
@@ -51,12 +52,14 @@ class SessionState:
         for p in SESSIONS_DIR.glob("*.json"):
             try:
                 data = json.loads(p.read_text())
-                sessions.append({
-                    "id": data["session_id"],
-                    "round": data["round"],
-                    "doc_type": data["doc_type"],
-                    "updated_at": data.get("updated_at", ""),
-                })
+                sessions.append(
+                    {
+                        "id": data["session_id"],
+                        "round": data["round"],
+                        "doc_type": data["doc_type"],
+                        "updated_at": data.get("updated_at", ""),
+                    }
+                )
             except Exception:
                 pass
         return sorted(sessions, key=lambda x: x.get("updated_at", ""), reverse=True)

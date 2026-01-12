@@ -77,7 +77,10 @@ class TestCLIDiff:
             prev.write_text("line1\nline2\n")
             curr.write_text("line1\nmodified\n")
 
-            with patch("sys.argv", ["debate.py", "diff", "--previous", str(prev), "--current", str(curr)]):
+            with patch(
+                "sys.argv",
+                ["debate.py", "diff", "--previous", str(prev), "--current", str(curr)],
+            ):
                 with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                     debate.main()
                     output = mock_stdout.getvalue()
@@ -94,11 +97,18 @@ class TestCLISaveProfile:
             profiles_dir = Path(tmpdir) / "profiles"
 
             with patch("providers.PROFILES_DIR", profiles_dir):
-                with patch("sys.argv", [
-                    "debate.py", "save-profile", "test-profile",
-                    "--models", "gpt-4o,gemini/gemini-2.0-flash",
-                    "--focus", "security",
-                ]):
+                with patch(
+                    "sys.argv",
+                    [
+                        "debate.py",
+                        "save-profile",
+                        "test-profile",
+                        "--models",
+                        "gpt-4o,gemini/gemini-2.0-flash",
+                        "--focus",
+                        "security",
+                    ],
+                ):
                     with patch("sys.stdout", new_callable=StringIO):
                         debate.main()
 
@@ -131,7 +141,9 @@ class TestCLICritique:
         ]
 
         with patch("sys.stdin", StringIO("# Test Spec\n\nContent here.")):
-            with patch("sys.argv", ["debate.py", "critique", "--models", "gpt-4o", "--json"]):
+            with patch(
+                "sys.argv", ["debate.py", "critique", "--models", "gpt-4o", "--json"]
+            ):
                 with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                     with patch("sys.stderr", new_callable=StringIO):
                         debate.main()
@@ -171,7 +183,16 @@ class TestCLICritique:
         ]
 
         with patch("sys.stdin", StringIO("# Test Spec")):
-            with patch("sys.argv", ["debate.py", "critique", "--models", "gpt-4o,gemini/gemini-2.0-flash", "--json"]):
+            with patch(
+                "sys.argv",
+                [
+                    "debate.py",
+                    "critique",
+                    "--models",
+                    "gpt-4o,gemini/gemini-2.0-flash",
+                    "--json",
+                ],
+            ):
                 with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                     with patch("sys.stderr", new_callable=StringIO):
                         debate.main()
@@ -196,14 +217,21 @@ class TestCLICritique:
         ]
 
         with patch("sys.stdin", StringIO("# Spec")):
-            with patch("sys.argv", [
-                "debate.py", "critique",
-                "--models", "gpt-4o",
-                "--focus", "security",
-                "--persona", "security-engineer",
-                "--preserve-intent",
-                "--json",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "debate.py",
+                    "critique",
+                    "--models",
+                    "gpt-4o",
+                    "--focus",
+                    "security",
+                    "--persona",
+                    "security-engineer",
+                    "--preserve-intent",
+                    "--json",
+                ],
+            ):
                 with patch("sys.stdout", new_callable=StringIO):
                     with patch("sys.stderr", new_callable=StringIO):
                         debate.main()
@@ -241,7 +269,10 @@ class TestCLIBedrock:
             config_path = Path(tmpdir) / "adversarial-spec" / "config.json"
 
             with patch("providers.GLOBAL_CONFIG_PATH", config_path):
-                with patch("sys.argv", ["debate.py", "bedrock", "enable", "--region", "us-east-1"]):
+                with patch(
+                    "sys.argv",
+                    ["debate.py", "bedrock", "enable", "--region", "us-east-1"],
+                ):
                     with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                         debate.main()
                         output = mock_stdout.getvalue()

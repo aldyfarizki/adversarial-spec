@@ -16,9 +16,13 @@ os.environ["LITELLM_LOG"] = "ERROR"
 try:
     import litellm
     from litellm import completion
+
     litellm.suppress_debug_info = True
 except ImportError:
-    print("Error: litellm package not installed. Run: pip install litellm", file=sys.stderr)
+    print(
+        "Error: litellm package not installed. Run: pip install litellm",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 from prompts import (
@@ -43,6 +47,7 @@ RETRY_BASE_DELAY = 1.0  # seconds
 @dataclass
 class ModelResponse:
     """Response from a model critique."""
+
     model: str
     response: str
     agreed: bool
@@ -56,6 +61,7 @@ class ModelResponse:
 @dataclass
 class CostTracker:
     """Track token usage and costs across model calls."""
+
     total_input_tokens: int = 0
     total_output_tokens: int = 0
     total_cost: float = 0.0
@@ -64,7 +70,9 @@ class CostTracker:
     def add(self, model: str, input_tokens: int, output_tokens: int) -> float:
         """Add usage for a model call and return the cost."""
         costs = MODEL_COSTS.get(model, DEFAULT_COST)
-        cost = (input_tokens / 1_000_000 * costs["input"]) + (output_tokens / 1_000_000 * costs["output"])
+        cost = (input_tokens / 1_000_000 * costs["input"]) + (
+            output_tokens / 1_000_000 * costs["output"]
+        )
 
         self.total_input_tokens += input_tokens
         self.total_output_tokens += output_tokens
@@ -81,13 +89,17 @@ class CostTracker:
     def summary(self) -> str:
         """Generate cost summary string."""
         lines = ["", "=== Cost Summary ==="]
-        lines.append(f"Total tokens: {self.total_input_tokens:,} in / {self.total_output_tokens:,} out")
+        lines.append(
+            f"Total tokens: {self.total_input_tokens:,} in / {self.total_output_tokens:,} out"
+        )
         lines.append(f"Total cost: ${self.total_cost:.4f}")
         if len(self.by_model) > 1:
             lines.append("")
             lines.append("By model:")
             for model, data in self.by_model.items():
-                lines.append(f"  {model}: ${data['cost']:.4f} ({data['input_tokens']:,} in / {data['output_tokens']:,} out)")
+                lines.append(
+                    f"  {model}: ${data['cost']:.4f} ({data['input_tokens']:,} in / {data['output_tokens']:,} out)"
+                )
         return "\n".join(lines)
 
 
@@ -108,7 +120,10 @@ def load_context_files(context_paths: list[str]) -> str:
         except Exception as e:
             sections.append(f"### Context: {path}\n[Error loading file: {e}]")
 
-    return "## Additional Context\nThe following documents are provided as context:\n\n" + "\n\n".join(sections)
+    return (
+        "## Additional Context\nThe following documents are provided as context:\n\n"
+        + "\n\n".join(sections)
+    )
 
 
 def detect_agreement(response: str) -> bool:
@@ -141,27 +156,57 @@ def extract_tasks(response: str) -> list[dict]:
             line = line.strip()
             if line.startswith("title:"):
                 if current_key:
-                    task[current_key] = "\n".join(current_value).strip() if len(current_value) > 1 else current_value[0] if current_value else ""
+                    task[current_key] = (
+                        "\n".join(current_value).strip()
+                        if len(current_value) > 1
+                        else current_value[0]
+                        if current_value
+                        else ""
+                    )
                 current_key = "title"
                 current_value = [line[6:].strip()]
             elif line.startswith("type:"):
                 if current_key:
-                    task[current_key] = "\n".join(current_value).strip() if len(current_value) > 1 else current_value[0] if current_value else ""
+                    task[current_key] = (
+                        "\n".join(current_value).strip()
+                        if len(current_value) > 1
+                        else current_value[0]
+                        if current_value
+                        else ""
+                    )
                 current_key = "type"
                 current_value = [line[5:].strip()]
             elif line.startswith("priority:"):
                 if current_key:
-                    task[current_key] = "\n".join(current_value).strip() if len(current_value) > 1 else current_value[0] if current_value else ""
+                    task[current_key] = (
+                        "\n".join(current_value).strip()
+                        if len(current_value) > 1
+                        else current_value[0]
+                        if current_value
+                        else ""
+                    )
                 current_key = "priority"
                 current_value = [line[9:].strip()]
             elif line.startswith("description:"):
                 if current_key:
-                    task[current_key] = "\n".join(current_value).strip() if len(current_value) > 1 else current_value[0] if current_value else ""
+                    task[current_key] = (
+                        "\n".join(current_value).strip()
+                        if len(current_value) > 1
+                        else current_value[0]
+                        if current_value
+                        else ""
+                    )
                 current_key = "description"
                 current_value = [line[12:].strip()]
             elif line.startswith("acceptance_criteria:"):
                 if current_key:
-                    task[current_key] = "\n".join(current_value).strip() if len(current_value) > 1 else current_value[0] if current_value else ""
+                    task[current_key] = (
+                        "\n".join(current_value).strip()
+                        if len(current_value) > 1
+                        else current_value[0]
+                        if current_value
+                        else ""
+                    )
                 current_key = "acceptance_criteria"
                 current_value = []
             elif line.startswith("- ") and current_key == "acceptance_criteria":
@@ -170,7 +215,11 @@ def extract_tasks(response: str) -> list[dict]:
                 current_value.append(line)
 
         if current_key:
-            task[current_key] = current_value if current_key == "acceptance_criteria" else "\n".join(current_value).strip()
+            task[current_key] = (
+                current_value
+                if current_key == "acceptance_criteria"
+                else "\n".join(current_value).strip()
+            )
 
         if task.get("title"):
             tasks.append(task)
@@ -197,11 +246,7 @@ def generate_diff(previous: str, current: str) -> str:
     curr_lines = current.splitlines(keepends=True)
 
     diff = difflib.unified_diff(
-        prev_lines,
-        curr_lines,
-        fromfile="previous",
-        tofile="current",
-        lineterm=""
+        prev_lines, curr_lines, fromfile="previous", tofile="current", lineterm=""
     )
     return "".join(diff)
 
@@ -212,7 +257,7 @@ def call_codex_model(
     model: str,
     reasoning_effort: str = DEFAULT_CODEX_REASONING,
     timeout: int = 600,
-    search: bool = False
+    search: bool = False,
 ) -> tuple[str, int, int]:
     """
     Call Codex CLI in headless mode using ChatGPT subscription.
@@ -232,7 +277,9 @@ def call_codex_model(
         RuntimeError: If Codex CLI is not available or fails
     """
     if not CODEX_AVAILABLE:
-        raise RuntimeError("Codex CLI not found. Install with: npm install -g @openai/codex")
+        raise RuntimeError(
+            "Codex CLI not found. Install with: npm install -g @openai/codex"
+        )
 
     # Extract actual model name from "codex/model" format
     actual_model = model.split("/", 1)[1] if "/" in model else model
@@ -246,25 +293,25 @@ USER REQUEST:
 
     try:
         cmd = [
-            "codex", "exec",
+            "codex",
+            "exec",
             "--json",
             "--full-auto",
-            "--model", actual_model,
-            "-c", f'model_reasoning_effort="{reasoning_effort}"',
+            "--model",
+            actual_model,
+            "-c",
+            f'model_reasoning_effort="{reasoning_effort}"',
         ]
         if search:
             cmd.append("--search")
         cmd.append(full_prompt)
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
         if result.returncode != 0:
-            error_msg = result.stderr.strip() or f"Codex exited with code {result.returncode}"
+            error_msg = (
+                result.stderr.strip() or f"Codex exited with code {result.returncode}"
+            )
             raise RuntimeError(f"Codex CLI failed: {error_msg}")
 
         # Parse JSONL output to extract agent messages
@@ -316,7 +363,7 @@ def call_single_model(
     codex_search: bool = False,
     timeout: int = 600,
     bedrock_mode: bool = False,
-    bedrock_region: Optional[str] = None
+    bedrock_region: Optional[str] = None,
 ) -> ModelResponse:
     """Send spec to a single model and return response with retry on failure."""
     # Handle Bedrock routing
@@ -347,7 +394,7 @@ def call_single_model(
         doc_type_name=doc_type_name,
         spec=spec,
         focus_section=focus_section,
-        context_section=context_section
+        context_section=context_section,
     )
 
     # Route Codex CLI models to dedicated handler
@@ -361,13 +408,16 @@ def call_single_model(
                     model=model,
                     reasoning_effort=codex_reasoning,
                     timeout=timeout,
-                    search=codex_search
+                    search=codex_search,
                 )
                 agreed = "[AGREE]" in content
                 extracted = extract_spec(content)
 
                 if not agreed and not extracted:
-                    print(f"Warning: {model} provided critique but no [SPEC] tags found. Response may be malformed.", file=sys.stderr)
+                    print(
+                        f"Warning: {model} provided critique but no [SPEC] tags found. Response may be malformed.",
+                        file=sys.stderr,
+                    )
 
                 cost = cost_tracker.add(model, input_tokens, output_tokens)
 
@@ -378,18 +428,26 @@ def call_single_model(
                     spec=extracted,
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
-                    cost=cost
+                    cost=cost,
                 )
             except Exception as e:
                 last_error = str(e)
                 if attempt < MAX_RETRIES - 1:
-                    delay = RETRY_BASE_DELAY * (2 ** attempt)
-                    print(f"Warning: {model} failed (attempt {attempt + 1}/{MAX_RETRIES}): {last_error}. Retrying in {delay:.1f}s...", file=sys.stderr)
+                    delay = RETRY_BASE_DELAY * (2**attempt)
+                    print(
+                        f"Warning: {model} failed (attempt {attempt + 1}/{MAX_RETRIES}): {last_error}. Retrying in {delay:.1f}s...",
+                        file=sys.stderr,
+                    )
                     time.sleep(delay)
                 else:
-                    print(f"Error: {model} failed after {MAX_RETRIES} attempts: {last_error}", file=sys.stderr)
+                    print(
+                        f"Error: {model} failed after {MAX_RETRIES} attempts: {last_error}",
+                        file=sys.stderr,
+                    )
 
-        return ModelResponse(model=model, response="", agreed=False, spec=None, error=last_error)
+        return ModelResponse(
+            model=model, response="", agreed=False, spec=None, error=last_error
+        )
 
     # Standard litellm path for all other providers
     last_error = None
@@ -401,18 +459,21 @@ def call_single_model(
                 model=actual_model,
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
+                    {"role": "user", "content": user_message},
                 ],
                 temperature=0.7,
                 max_tokens=8000,
-                timeout=timeout
+                timeout=timeout,
             )
             content = response.choices[0].message.content
             agreed = "[AGREE]" in content
             extracted = extract_spec(content)
 
             if not agreed and not extracted:
-                print(f"Warning: {display_model} provided critique but no [SPEC] tags found. Response may be malformed.", file=sys.stderr)
+                print(
+                    f"Warning: {display_model} provided critique but no [SPEC] tags found. Response may be malformed.",
+                    file=sys.stderr,
+                )
 
             input_tokens = response.usage.prompt_tokens if response.usage else 0
             output_tokens = response.usage.completion_tokens if response.usage else 0
@@ -426,24 +487,34 @@ def call_single_model(
                 spec=extracted,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
-                cost=cost
+                cost=cost,
             )
         except Exception as e:
             last_error = str(e)
             if bedrock_mode:
                 if "AccessDeniedException" in last_error:
-                    last_error = f"Model not enabled in your Bedrock account: {display_model}"
+                    last_error = (
+                        f"Model not enabled in your Bedrock account: {display_model}"
+                    )
                 elif "ValidationException" in last_error:
                     last_error = f"Invalid Bedrock model ID: {display_model}"
 
             if attempt < MAX_RETRIES - 1:
-                delay = RETRY_BASE_DELAY * (2 ** attempt)
-                print(f"Warning: {display_model} failed (attempt {attempt + 1}/{MAX_RETRIES}): {last_error}. Retrying in {delay:.1f}s...", file=sys.stderr)
+                delay = RETRY_BASE_DELAY * (2**attempt)
+                print(
+                    f"Warning: {display_model} failed (attempt {attempt + 1}/{MAX_RETRIES}): {last_error}. Retrying in {delay:.1f}s...",
+                    file=sys.stderr,
+                )
                 time.sleep(delay)
             else:
-                print(f"Error: {display_model} failed after {MAX_RETRIES} attempts: {last_error}", file=sys.stderr)
+                print(
+                    f"Error: {display_model} failed after {MAX_RETRIES} attempts: {last_error}",
+                    file=sys.stderr,
+                )
 
-    return ModelResponse(model=display_model, response="", agreed=False, spec=None, error=last_error)
+    return ModelResponse(
+        model=display_model, response="", agreed=False, spec=None, error=last_error
+    )
 
 
 def call_models_parallel(
@@ -460,15 +531,28 @@ def call_models_parallel(
     codex_search: bool = False,
     timeout: int = 600,
     bedrock_mode: bool = False,
-    bedrock_region: Optional[str] = None
+    bedrock_region: Optional[str] = None,
 ) -> list[ModelResponse]:
     """Call multiple models in parallel and collect responses."""
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(models)) as executor:
         future_to_model = {
             executor.submit(
-                call_single_model, model, spec, round_num, doc_type, press, focus, persona, context, preserve_intent,
-                codex_reasoning, codex_search, timeout, bedrock_mode, bedrock_region
+                call_single_model,
+                model,
+                spec,
+                round_num,
+                doc_type,
+                press,
+                focus,
+                persona,
+                context,
+                preserve_intent,
+                codex_reasoning,
+                codex_search,
+                timeout,
+                bedrock_mode,
+                bedrock_region,
             ): model
             for model in models
         }

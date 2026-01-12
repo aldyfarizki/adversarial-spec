@@ -54,7 +54,10 @@ os.environ["LITELLM_LOG"] = "ERROR"
 try:
     from litellm import completion
 except ImportError:
-    print("Error: litellm package not installed. Run: pip install litellm", file=sys.stderr)
+    print(
+        "Error: litellm package not installed. Run: pip install litellm",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 from prompts import EXPORT_TASKS_PROMPT, get_doc_type_name
@@ -82,7 +85,9 @@ from models import (
 )
 
 
-def send_telegram_notification(models: list[str], round_num: int, results: list[ModelResponse], poll_timeout: int) -> Optional[str]:
+def send_telegram_notification(
+    models: list[str], round_num: int, results: list[ModelResponse], poll_timeout: int
+) -> Optional[str]:
     """Send Telegram notification with all model responses and poll for feedback."""
     try:
         script_dir = Path(__file__).parent
@@ -91,7 +96,10 @@ def send_telegram_notification(models: list[str], round_num: int, results: list[
 
         token, chat_id = telegram_bot.get_config()
         if not token or not chat_id:
-            print("Warning: Telegram not configured. Skipping notification.", file=sys.stderr)
+            print(
+                "Warning: Telegram not configured. Skipping notification.",
+                file=sys.stderr,
+            )
             return None
 
         summaries = []
@@ -119,23 +127,33 @@ Cost: ${cost_tracker.total_cost:.4f}
 
         last_update = telegram_bot.get_last_update_id(token)
 
-        full_notification = notification + f"\n\n_Reply within {poll_timeout}s to add feedback, or wait to continue._"
+        full_notification = (
+            notification
+            + f"\n\n_Reply within {poll_timeout}s to add feedback, or wait to continue._"
+        )
         if not telegram_bot.send_long_message(token, chat_id, full_notification):
             print("Warning: Failed to send Telegram notification.", file=sys.stderr)
             return None
 
-        feedback = telegram_bot.poll_for_reply(token, chat_id, poll_timeout, last_update)
+        feedback = telegram_bot.poll_for_reply(
+            token, chat_id, poll_timeout, last_update
+        )
         return feedback
 
     except ImportError:
-        print("Warning: telegram_bot.py not found. Skipping notification.", file=sys.stderr)
+        print(
+            "Warning: telegram_bot.py not found. Skipping notification.",
+            file=sys.stderr,
+        )
         return None
     except Exception as e:
         print(f"Warning: Telegram error: {e}", file=sys.stderr)
         return None
 
 
-def send_final_spec_to_telegram(spec: str, rounds: int, models: list[str], doc_type: str) -> bool:
+def send_final_spec_to_telegram(
+    spec: str, rounds: int, models: list[str], doc_type: str
+) -> bool:
     """Send the final converged spec to Telegram."""
     try:
         script_dir = Path(__file__).parent
@@ -144,7 +162,10 @@ def send_final_spec_to_telegram(spec: str, rounds: int, models: list[str], doc_t
 
         token, chat_id = telegram_bot.get_config()
         if not token or not chat_id:
-            print("Warning: Telegram not configured. Skipping final spec notification.", file=sys.stderr)
+            print(
+                "Warning: Telegram not configured. Skipping final spec notification.",
+                file=sys.stderr,
+            )
             return False
 
         doc_type_name = get_doc_type_name(doc_type)
@@ -199,58 +220,127 @@ Bedrock commands:
 Document types:
   prd   - Product Requirements Document (business/product focus)
   tech  - Technical Specification / Architecture Document (engineering focus)
-        """
+        """,
     )
-    parser.add_argument("action", choices=["critique", "providers", "send-final", "diff", "export-tasks", "focus-areas", "personas", "profiles", "save-profile", "sessions", "bedrock"],
-                        help="Action to perform")
-    parser.add_argument("profile_name", nargs="?", help="Profile name (for save-profile action) or bedrock subcommand")
-    parser.add_argument("--models", "-m", default="gpt-4o",
-                        help="Comma-separated list of models (e.g., gpt-4o,gemini/gemini-2.0-flash,xai/grok-3)")
-    parser.add_argument("--doc-type", "-d", choices=["prd", "tech"], default="tech",
-                        help="Document type: prd or tech (default: tech)")
-    parser.add_argument("--round", "-r", type=int, default=1,
-                        help="Current round number")
-    parser.add_argument("--json", "-j", action="store_true",
-                        help="Output as JSON")
-    parser.add_argument("--telegram", "-t", action="store_true",
-                        help="Send Telegram notifications and poll for feedback")
-    parser.add_argument("--poll-timeout", type=int, default=60,
-                        help="Seconds to wait for Telegram reply (default: 60)")
-    parser.add_argument("--rounds", type=int, default=1,
-                        help="Total rounds completed (used with send-final)")
-    parser.add_argument("--press", "-p", action="store_true",
-                        help="Press models to confirm they read the full document (anti-laziness check)")
-    parser.add_argument("--focus", "-f",
-                        help="Focus area for critique (security, scalability, performance, ux, reliability, cost)")
-    parser.add_argument("--persona",
-                        help="Persona for critique (security-engineer, oncall-engineer, junior-developer, etc.)")
-    parser.add_argument("--context", "-c", action="append", default=[],
-                        help="Additional context file(s) to include (can be used multiple times)")
-    parser.add_argument("--profile",
-                        help="Load settings from a saved profile")
-    parser.add_argument("--previous",
-                        help="Previous spec file (for diff action)")
-    parser.add_argument("--current",
-                        help="Current spec file (for diff action)")
-    parser.add_argument("--show-cost", action="store_true",
-                        help="Show cost summary after critique")
-    parser.add_argument("--preserve-intent", action="store_true",
-                        help="Require explicit justification for any removal or substantial modification")
-    parser.add_argument("--codex-reasoning", default=DEFAULT_CODEX_REASONING,
-                        choices=["low", "medium", "high", "xhigh"],
-                        help=f"Reasoning effort for Codex CLI models (default: {DEFAULT_CODEX_REASONING})")
-    parser.add_argument("--session", "-s",
-                        help="Session ID for state persistence (enables checkpointing and resume)")
-    parser.add_argument("--resume",
-                        help="Resume a previous session by ID")
-    parser.add_argument("--codex-search", action="store_true",
-                        help="Enable web search for Codex CLI models")
-    parser.add_argument("--timeout", type=int, default=600,
-                        help="Timeout in seconds for model API/CLI calls (default: 600 = 10 minutes)")
-    parser.add_argument("--region",
-                        help="AWS region for Bedrock (e.g., us-east-1)")
-    parser.add_argument("bedrock_arg", nargs="?",
-                        help="Additional argument for bedrock subcommands (model name or alias target)")
+    parser.add_argument(
+        "action",
+        choices=[
+            "critique",
+            "providers",
+            "send-final",
+            "diff",
+            "export-tasks",
+            "focus-areas",
+            "personas",
+            "profiles",
+            "save-profile",
+            "sessions",
+            "bedrock",
+        ],
+        help="Action to perform",
+    )
+    parser.add_argument(
+        "profile_name",
+        nargs="?",
+        help="Profile name (for save-profile action) or bedrock subcommand",
+    )
+    parser.add_argument(
+        "--models",
+        "-m",
+        default="gpt-4o",
+        help="Comma-separated list of models (e.g., gpt-4o,gemini/gemini-2.0-flash,xai/grok-3)",
+    )
+    parser.add_argument(
+        "--doc-type",
+        "-d",
+        choices=["prd", "tech"],
+        default="tech",
+        help="Document type: prd or tech (default: tech)",
+    )
+    parser.add_argument(
+        "--round", "-r", type=int, default=1, help="Current round number"
+    )
+    parser.add_argument("--json", "-j", action="store_true", help="Output as JSON")
+    parser.add_argument(
+        "--telegram",
+        "-t",
+        action="store_true",
+        help="Send Telegram notifications and poll for feedback",
+    )
+    parser.add_argument(
+        "--poll-timeout",
+        type=int,
+        default=60,
+        help="Seconds to wait for Telegram reply (default: 60)",
+    )
+    parser.add_argument(
+        "--rounds",
+        type=int,
+        default=1,
+        help="Total rounds completed (used with send-final)",
+    )
+    parser.add_argument(
+        "--press",
+        "-p",
+        action="store_true",
+        help="Press models to confirm they read the full document (anti-laziness check)",
+    )
+    parser.add_argument(
+        "--focus",
+        "-f",
+        help="Focus area for critique (security, scalability, performance, ux, reliability, cost)",
+    )
+    parser.add_argument(
+        "--persona",
+        help="Persona for critique (security-engineer, oncall-engineer, junior-developer, etc.)",
+    )
+    parser.add_argument(
+        "--context",
+        "-c",
+        action="append",
+        default=[],
+        help="Additional context file(s) to include (can be used multiple times)",
+    )
+    parser.add_argument("--profile", help="Load settings from a saved profile")
+    parser.add_argument("--previous", help="Previous spec file (for diff action)")
+    parser.add_argument("--current", help="Current spec file (for diff action)")
+    parser.add_argument(
+        "--show-cost", action="store_true", help="Show cost summary after critique"
+    )
+    parser.add_argument(
+        "--preserve-intent",
+        action="store_true",
+        help="Require explicit justification for any removal or substantial modification",
+    )
+    parser.add_argument(
+        "--codex-reasoning",
+        default=DEFAULT_CODEX_REASONING,
+        choices=["low", "medium", "high", "xhigh"],
+        help=f"Reasoning effort for Codex CLI models (default: {DEFAULT_CODEX_REASONING})",
+    )
+    parser.add_argument(
+        "--session",
+        "-s",
+        help="Session ID for state persistence (enables checkpointing and resume)",
+    )
+    parser.add_argument("--resume", help="Resume a previous session by ID")
+    parser.add_argument(
+        "--codex-search",
+        action="store_true",
+        help="Enable web search for Codex CLI models",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=600,
+        help="Timeout in seconds for model API/CLI calls (default: 600 = 10 minutes)",
+    )
+    parser.add_argument("--region", help="AWS region for Bedrock (e.g., us-east-1)")
+    parser.add_argument(
+        "bedrock_arg",
+        nargs="?",
+        help="Additional argument for bedrock subcommands (model name or alias target)",
+    )
     args = parser.parse_args()
 
     # Handle simple info commands
@@ -281,7 +371,9 @@ Document types:
             for s in sessions:
                 print(f"  {s['id']}")
                 print(f"    round: {s['round']}, type: {s['doc_type']}")
-                print(f"    updated: {s['updated_at'][:19] if s['updated_at'] else 'unknown'}")
+                print(
+                    f"    updated: {s['updated_at'][:19] if s['updated_at'] else 'unknown'}"
+                )
                 print()
         return
 
@@ -357,24 +449,43 @@ Document types:
     if bedrock_mode and args.action == "critique":
         available = bedrock_config.get("available_models", [])
         if not available:
-            print("Error: Bedrock mode is enabled but no models are configured.", file=sys.stderr)
-            print("Add models with: python3 debate.py bedrock add-model claude-3-sonnet", file=sys.stderr)
-            print("Or disable Bedrock: python3 debate.py bedrock disable", file=sys.stderr)
+            print(
+                "Error: Bedrock mode is enabled but no models are configured.",
+                file=sys.stderr,
+            )
+            print(
+                "Add models with: python3 debate.py bedrock add-model claude-3-sonnet",
+                file=sys.stderr,
+            )
+            print(
+                "Or disable Bedrock: python3 debate.py bedrock disable", file=sys.stderr
+            )
             sys.exit(2)
 
         valid_models, invalid_models = validate_bedrock_models(models, bedrock_config)
 
         if invalid_models:
-            print("Error: The following models are not available in your Bedrock configuration:", file=sys.stderr)
+            print(
+                "Error: The following models are not available in your Bedrock configuration:",
+                file=sys.stderr,
+            )
             for m in invalid_models:
                 print(f"  - {m}", file=sys.stderr)
             print(f"\nAvailable models: {', '.join(available)}", file=sys.stderr)
-            print("Add models with: python3 debate.py bedrock add-model <model>", file=sys.stderr)
-            print("Or disable Bedrock: python3 debate.py bedrock disable", file=sys.stderr)
+            print(
+                "Add models with: python3 debate.py bedrock add-model <model>",
+                file=sys.stderr,
+            )
+            print(
+                "Or disable Bedrock: python3 debate.py bedrock disable", file=sys.stderr
+            )
             sys.exit(2)
 
         models = valid_models
-        print(f"Bedrock mode: routing through AWS Bedrock ({bedrock_region})", file=sys.stderr)
+        print(
+            f"Bedrock mode: routing through AWS Bedrock ({bedrock_region})",
+            file=sys.stderr,
+        )
 
     if args.action == "send-final":
         spec = sys.stdin.read().strip()
@@ -402,7 +513,7 @@ Document types:
                 model=models[0],
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
-                max_tokens=8000
+                max_tokens=8000,
             )
             content = response.choices[0].message.content
             tasks = extract_tasks(content)
@@ -412,11 +523,15 @@ Document types:
             else:
                 print(f"\n=== Extracted {len(tasks)} Tasks ===\n")
                 for i, task in enumerate(tasks, 1):
-                    print(f"{i}. [{task.get('type', 'task')}] [{task.get('priority', 'medium')}] {task.get('title', 'Untitled')}")
-                    if task.get('description'):
+                    print(
+                        f"{i}. [{task.get('type', 'task')}] [{task.get('priority', 'medium')}] {task.get('title', 'Untitled')}"
+                    )
+                    if task.get("description"):
                         print(f"   {task['description'][:100]}...")
-                    if task.get('acceptance_criteria'):
-                        print(f"   Acceptance criteria: {len(task['acceptance_criteria'])} items")
+                    if task.get("acceptance_criteria"):
+                        print(
+                            f"   Acceptance criteria: {len(task['acceptance_criteria'])} items"
+                        )
                     print()
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
@@ -428,7 +543,10 @@ Document types:
     if args.resume:
         try:
             session_state = SessionState.load(args.resume)
-            print(f"Resuming session '{args.resume}' at round {session_state.round}", file=sys.stderr)
+            print(
+                f"Resuming session '{args.resume}' at round {session_state.round}",
+                file=sys.stderr,
+            )
             spec = session_state.spec
             args.round = session_state.round
             args.doc_type = session_state.doc_type
@@ -470,13 +588,26 @@ Document types:
     persona_info = f" (persona: {args.persona})" if args.persona else ""
     preserve_info = " (preserve-intent)" if args.preserve_intent else ""
     search_info = " (search)" if args.codex_search else ""
-    print(f"Calling {len(models)} model(s) ({mode}){focus_info}{persona_info}{preserve_info}{search_info}: {', '.join(models)}...", file=sys.stderr)
+    print(
+        f"Calling {len(models)} model(s) ({mode}){focus_info}{persona_info}{preserve_info}{search_info}: {', '.join(models)}...",
+        file=sys.stderr,
+    )
 
     results = call_models_parallel(
-        models, spec, args.round, args.doc_type, args.press,
-        args.focus, args.persona, context, args.preserve_intent,
-        args.codex_reasoning, args.codex_search, args.timeout,
-        bedrock_mode, bedrock_region
+        models,
+        spec,
+        args.round,
+        args.doc_type,
+        args.press,
+        args.focus,
+        args.persona,
+        context,
+        args.preserve_intent,
+        args.codex_reasoning,
+        args.codex_search,
+        args.timeout,
+        bedrock_mode,
+        bedrock_region,
     )
 
     errors = [r for r in results if r.error]
@@ -502,16 +633,23 @@ Document types:
     if session_state:
         session_state.spec = latest_spec
         session_state.round = args.round + 1
-        session_state.history.append({
-            "round": args.round,
-            "all_agreed": all_agreed,
-            "models": [{"model": r.model, "agreed": r.agreed, "error": r.error} for r in results],
-        })
+        session_state.history.append(
+            {
+                "round": args.round,
+                "all_agreed": all_agreed,
+                "models": [
+                    {"model": r.model, "agreed": r.agreed, "error": r.error}
+                    for r in results
+                ],
+            }
+        )
         session_state.save()
 
     user_feedback = None
     if args.telegram:
-        user_feedback = send_telegram_notification(models, args.round, results, args.poll_timeout)
+        user_feedback = send_telegram_notification(
+            models, args.round, results, args.poll_timeout
+        )
         if user_feedback:
             print(f"Received feedback: {user_feedback}", file=sys.stderr)
 
@@ -534,7 +672,7 @@ Document types:
                     "error": r.error,
                     "input_tokens": r.input_tokens,
                     "output_tokens": r.output_tokens,
-                    "cost": r.cost
+                    "cost": r.cost,
                 }
                 for r in results
             ],
@@ -542,8 +680,8 @@ Document types:
                 "total": cost_tracker.total_cost,
                 "input_tokens": cost_tracker.total_input_tokens,
                 "output_tokens": cost_tracker.total_output_tokens,
-                "by_model": cost_tracker.by_model
-            }
+                "by_model": cost_tracker.by_model,
+            },
         }
         if user_feedback:
             output["user_feedback"] = user_feedback

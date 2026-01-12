@@ -77,7 +77,9 @@ class TestGlobalConfig:
             config_path = Path(tmpdir) / "subdir" / "config.json"
 
             with patch("providers.GLOBAL_CONFIG_PATH", config_path):
-                save_global_config({"bedrock": {"enabled": True, "region": "us-east-1"}})
+                save_global_config(
+                    {"bedrock": {"enabled": True, "region": "us-east-1"}}
+                )
 
                 assert config_path.exists()
 

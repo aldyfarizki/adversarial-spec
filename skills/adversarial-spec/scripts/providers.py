@@ -106,7 +106,9 @@ def get_bedrock_config() -> dict:
     return config.get("bedrock", {})
 
 
-def resolve_bedrock_model(friendly_name: str, config: Optional[dict] = None) -> Optional[str]:
+def resolve_bedrock_model(
+    friendly_name: str, config: Optional[dict] = None
+) -> Optional[str]:
     """
     Resolve a friendly model name to a Bedrock model ID.
 
@@ -135,7 +137,9 @@ def resolve_bedrock_model(friendly_name: str, config: Optional[dict] = None) -> 
     return None
 
 
-def validate_bedrock_models(models: list[str], config: Optional[dict] = None) -> tuple[list[str], list[str]]:
+def validate_bedrock_models(
+    models: list[str], config: Optional[dict] = None
+) -> tuple[list[str], list[str]]:
     """
     Validate that requested models are available in Bedrock config.
 
@@ -177,7 +181,10 @@ def load_profile(profile_name: str) -> dict:
     """Load a saved profile by name."""
     profile_path = PROFILES_DIR / f"{profile_name}.json"
     if not profile_path.exists():
-        print(f"Error: Profile '{profile_name}' not found at {profile_path}", file=sys.stderr)
+        print(
+            f"Error: Profile '{profile_name}' not found at {profile_path}",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
     try:
@@ -201,7 +208,9 @@ def list_profiles():
     if not PROFILES_DIR.exists():
         print("  No profiles found.")
         print(f"\n  Profiles are stored in: {PROFILES_DIR}")
-        print("\n  Create a profile with: python3 debate.py save-profile <name> --models ... --focus ...")
+        print(
+            "\n  Create a profile with: python3 debate.py save-profile <name> --models ... --focus ..."
+        )
         return
 
     profiles = list(PROFILES_DIR.glob("*.json"))
@@ -236,23 +245,33 @@ def list_providers():
         print("  Status:  ENABLED - All models route through Bedrock")
         print(f"  Region:  {bedrock_config.get('region', 'not set')}")
         available = bedrock_config.get("available_models", [])
-        print(f"  Models:  {', '.join(available) if available else '(none configured)'}")
+        print(
+            f"  Models:  {', '.join(available) if available else '(none configured)'}"
+        )
 
         # Check AWS credentials
         aws_creds = bool(
-            os.environ.get("AWS_ACCESS_KEY_ID") or
-            os.environ.get("AWS_PROFILE") or
-            os.environ.get("AWS_ROLE_ARN")
+            os.environ.get("AWS_ACCESS_KEY_ID")
+            or os.environ.get("AWS_PROFILE")
+            or os.environ.get("AWS_ROLE_ARN")
         )
         print(f"  AWS Credentials: {'[available]' if aws_creds else '[not detected]'}")
         print()
-        print("  Run 'python3 debate.py bedrock status' for full Bedrock configuration.")
-        print("  Run 'python3 debate.py bedrock disable' to use direct API keys instead.\n")
+        print(
+            "  Run 'python3 debate.py bedrock status' for full Bedrock configuration."
+        )
+        print(
+            "  Run 'python3 debate.py bedrock disable' to use direct API keys instead.\n"
+        )
         print("-" * 60 + "\n")
 
     providers = [
         ("OpenAI", "OPENAI_API_KEY", "gpt-4o, gpt-4-turbo, o1"),
-        ("Anthropic", "ANTHROPIC_API_KEY", "claude-sonnet-4-20250514, claude-opus-4-20250514"),
+        (
+            "Anthropic",
+            "ANTHROPIC_API_KEY",
+            "claude-sonnet-4-20250514, claude-opus-4-20250514",
+        ),
         ("Google", "GEMINI_API_KEY", "gemini/gemini-2.0-flash, gemini/gemini-pro"),
         ("xAI", "XAI_API_KEY", "xai/grok-3, xai/grok-beta"),
         ("Mistral", "MISTRAL_API_KEY", "mistral/mistral-large, mistral/codestral"),
@@ -277,14 +296,18 @@ def list_providers():
     codex_status = "[installed]" if CODEX_AVAILABLE else "[not installed]"
     print(f"  {'Codex CLI':12} {'(ChatGPT subscription)':24} {codex_status}")
     print("             Example models: codex/gpt-5.2-codex, codex/gpt-5.1-codex-max")
-    print("             Reasoning: --codex-reasoning (minimal, low, medium, high, xhigh)")
+    print(
+        "             Reasoning: --codex-reasoning (minimal, low, medium, high, xhigh)"
+    )
     print("             Install: npm install -g @openai/codex && codex login")
     print()
 
     # Show Bedrock option if not enabled
     if not bedrock_config.get("enabled"):
         print("AWS Bedrock:\n")
-        print("  Not configured. Enable with: python3 debate.py bedrock enable --region us-east-1")
+        print(
+            "  Not configured. Enable with: python3 debate.py bedrock enable --region us-east-1"
+        )
         print()
 
 
@@ -292,7 +315,11 @@ def list_focus_areas():
     """List available focus areas."""
     print("Available focus areas (--focus):\n")
     for name, description in FOCUS_AREAS.items():
-        first_line = description.strip().split("\n")[1] if "\n" in description else description[:60]
+        first_line = (
+            description.strip().split("\n")[1]
+            if "\n" in description
+            else description[:60]
+        )
         print(f"  {name:15} {first_line.strip()[:60]}")
     print()
 
@@ -335,7 +362,9 @@ def handle_bedrock_command(subcommand: str, arg: Optional[str], region: Optional
                     print(f"    - {model}")
         else:
             print("    (none configured)")
-            print("\n    Add models with: python3 debate.py bedrock add-model claude-3-sonnet")
+            print(
+                "\n    Add models with: python3 debate.py bedrock add-model claude-3-sonnet"
+            )
 
         aliases = bedrock.get("custom_aliases", {})
         if aliases:
@@ -353,7 +382,10 @@ def handle_bedrock_command(subcommand: str, arg: Optional[str], region: Optional
     elif subcommand == "enable":
         if not region:
             print("Error: --region is required for 'bedrock enable'", file=sys.stderr)
-            print("Example: python3 debate.py bedrock enable --region us-east-1", file=sys.stderr)
+            print(
+                "Example: python3 debate.py bedrock enable --region us-east-1",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         bedrock["enabled"] = True
@@ -369,7 +401,9 @@ def handle_bedrock_command(subcommand: str, arg: Optional[str], region: Optional
         print(f"Config saved to: {GLOBAL_CONFIG_PATH}")
 
         if not bedrock.get("available_models"):
-            print("\nNext: Add models with: python3 debate.py bedrock add-model claude-3-sonnet")
+            print(
+                "\nNext: Add models with: python3 debate.py bedrock add-model claude-3-sonnet"
+            )
 
     elif subcommand == "disable":
         bedrock["enabled"] = False
@@ -380,14 +414,23 @@ def handle_bedrock_command(subcommand: str, arg: Optional[str], region: Optional
     elif subcommand == "add-model":
         if not arg:
             print("Error: Model name required for 'bedrock add-model'", file=sys.stderr)
-            print("Example: python3 debate.py bedrock add-model claude-3-sonnet", file=sys.stderr)
+            print(
+                "Example: python3 debate.py bedrock add-model claude-3-sonnet",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         # Validate model name
         resolved = resolve_bedrock_model(arg, bedrock)
         if not resolved:
-            print(f"Warning: '{arg}' is not a known Bedrock model. Adding anyway.", file=sys.stderr)
-            print("Use 'python3 debate.py bedrock alias' to map it to a Bedrock model ID.", file=sys.stderr)
+            print(
+                f"Warning: '{arg}' is not a known Bedrock model. Adding anyway.",
+                file=sys.stderr,
+            )
+            print(
+                "Use 'python3 debate.py bedrock alias' to map it to a Bedrock model ID.",
+                file=sys.stderr,
+            )
 
         available = bedrock.get("available_models", [])
         if arg in available:
@@ -406,7 +449,9 @@ def handle_bedrock_command(subcommand: str, arg: Optional[str], region: Optional
 
     elif subcommand == "remove-model":
         if not arg:
-            print("Error: Model name required for 'bedrock remove-model'", file=sys.stderr)
+            print(
+                "Error: Model name required for 'bedrock remove-model'", file=sys.stderr
+            )
             sys.exit(1)
 
         available = bedrock.get("available_models", [])
@@ -422,12 +467,24 @@ def handle_bedrock_command(subcommand: str, arg: Optional[str], region: Optional
 
     elif subcommand == "alias":
         if not arg:
-            print("Error: Alias name and target required for 'bedrock alias'", file=sys.stderr)
-            print("Example: python3 debate.py bedrock alias mymodel anthropic.claude-3-sonnet-20240229-v1:0", file=sys.stderr)
+            print(
+                "Error: Alias name and target required for 'bedrock alias'",
+                file=sys.stderr,
+            )
+            print(
+                "Example: python3 debate.py bedrock alias mymodel anthropic.claude-3-sonnet-20240229-v1:0",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
-        print("Error: 'bedrock alias' requires two arguments: alias_name and model_id", file=sys.stderr)
-        print("Example: python3 debate.py bedrock alias mymodel anthropic.claude-3-sonnet-20240229-v1:0", file=sys.stderr)
+        print(
+            "Error: 'bedrock alias' requires two arguments: alias_name and model_id",
+            file=sys.stderr,
+        )
+        print(
+            "Example: python3 debate.py bedrock alias mymodel anthropic.claude-3-sonnet-20240229-v1:0",
+            file=sys.stderr,
+        )
         print("\nAlternatively, edit the config file directly:", file=sys.stderr)
         print(f"  {GLOBAL_CONFIG_PATH}", file=sys.stderr)
         sys.exit(1)
@@ -439,5 +496,8 @@ def handle_bedrock_command(subcommand: str, arg: Optional[str], region: Optional
 
     else:
         print(f"Unknown bedrock subcommand: {subcommand}", file=sys.stderr)
-        print("Available subcommands: status, enable, disable, add-model, remove-model, alias, list-models", file=sys.stderr)
+        print(
+            "Available subcommands: status, enable, disable, add-model, remove-model, alias, list-models",
+            file=sys.stderr,
+        )
         sys.exit(1)

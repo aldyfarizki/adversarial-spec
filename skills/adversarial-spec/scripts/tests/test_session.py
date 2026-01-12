@@ -127,11 +127,13 @@ class TestSessionState:
         )
         assert session.history == []
 
-        session.history.append({
-            "round": 1,
-            "all_agreed": False,
-            "models": [{"model": "gpt-4o", "agreed": False}],
-        })
+        session.history.append(
+            {
+                "round": 1,
+                "all_agreed": False,
+                "models": [{"model": "gpt-4o", "agreed": False}],
+            }
+        )
         assert len(session.history) == 1
         assert session.history[0]["round"] == 1
 

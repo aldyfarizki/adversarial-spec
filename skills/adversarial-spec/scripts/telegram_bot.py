@@ -57,11 +57,11 @@ def api_call(token: str, method: str, params: Optional[dict] = None) -> dict:
 
 def send_message(token: str, chat_id: str, text: str) -> bool:
     """Send a single message. Returns True on success."""
-    result = api_call(token, "sendMessage", {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "Markdown"
-    })
+    result = api_call(
+        token,
+        "sendMessage",
+        {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"},
+    )
     return result.get("ok", False)
 
 
@@ -101,7 +101,7 @@ def send_long_message(token: str, chat_id: str, text: str) -> bool:
     chunks = split_message(text)
     for i, chunk in enumerate(chunks):
         if len(chunks) > 1:
-            header = f"[{i+1}/{len(chunks)}]\n"
+            header = f"[{i + 1}/{len(chunks)}]\n"
             chunk = header + chunk
         if not send_message(token, chat_id, chunk):
             return False
@@ -119,7 +119,9 @@ def get_last_update_id(token: str) -> int:
     return 0
 
 
-def poll_for_reply(token: str, chat_id: str, timeout: int = 60, after_update_id: int = 0) -> Optional[str]:
+def poll_for_reply(
+    token: str, chat_id: str, timeout: int = 60, after_update_id: int = 0
+) -> Optional[str]:
     """
     Poll for a reply from the specified chat.
     Returns message text if received within timeout, None otherwise.
@@ -243,7 +245,10 @@ def cmd_send(args):
     """Send message from stdin."""
     token, chat_id = get_config()
     if not token or not chat_id:
-        print("Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set", file=sys.stderr)
+        print(
+            "Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
     text = sys.stdin.read().strip()
@@ -262,7 +267,10 @@ def cmd_poll(args):
     """Poll for reply."""
     token, chat_id = get_config()
     if not token or not chat_id:
-        print("Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set", file=sys.stderr)
+        print(
+            "Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
     last_update = get_last_update_id(token)
@@ -280,7 +288,10 @@ def cmd_notify(args):
     """Send round notification and poll for feedback."""
     token, chat_id = get_config()
     if not token or not chat_id:
-        print("Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set", file=sys.stderr)
+        print(
+            "Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
     # Read notification from stdin
@@ -293,7 +304,9 @@ def cmd_notify(args):
     last_update = get_last_update_id(token)
 
     # Send notification
-    notification += f"\n\n_Reply within {args.timeout}s to add feedback, or wait to continue._"
+    notification += (
+        f"\n\n_Reply within {args.timeout}s to add feedback, or wait to continue._"
+    )
     if not send_long_message(token, chat_id, notification):
         print("Failed to send notification.", file=sys.stderr)
         sys.exit(1)
@@ -302,22 +315,21 @@ def cmd_notify(args):
     reply = poll_for_reply(token, chat_id, args.timeout, last_update)
 
     # Output as JSON
-    result = {
-        "notification_sent": True,
-        "feedback": reply
-    }
+    result = {"notification_sent": True, "feedback": reply}
     print(json.dumps(result))
 
 
 def main():
     parser = argparse.ArgumentParser(
         description="Telegram bot utilities for adversarial spec development",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # setup
-    setup_parser = subparsers.add_parser("setup", help="Setup instructions and chat ID discovery")
+    setup_parser = subparsers.add_parser(
+        "setup", help="Setup instructions and chat ID discovery"
+    )
     setup_parser.set_defaults(func=cmd_setup)
 
     # send
@@ -326,12 +338,18 @@ def main():
 
     # poll
     poll_parser = subparsers.add_parser("poll", help="Poll for reply")
-    poll_parser.add_argument("--timeout", "-t", type=int, default=60, help="Timeout in seconds")
+    poll_parser.add_argument(
+        "--timeout", "-t", type=int, default=60, help="Timeout in seconds"
+    )
     poll_parser.set_defaults(func=cmd_poll)
 
     # notify
-    notify_parser = subparsers.add_parser("notify", help="Send notification and poll for feedback")
-    notify_parser.add_argument("--timeout", "-t", type=int, default=60, help="Timeout in seconds")
+    notify_parser = subparsers.add_parser(
+        "notify", help="Send notification and poll for feedback"
+    )
+    notify_parser.add_argument(
+        "--timeout", "-t", type=int, default=60, help="Timeout in seconds"
+    )
     notify_parser.set_defaults(func=cmd_notify)
 
     args = parser.parse_args()

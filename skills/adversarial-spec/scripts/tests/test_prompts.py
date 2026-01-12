@@ -62,7 +62,14 @@ class TestGetDocTypeName:
 
 class TestFocusAreas:
     def test_all_focus_areas_exist(self):
-        expected = ["security", "scalability", "performance", "ux", "reliability", "cost"]
+        expected = [
+            "security",
+            "scalability",
+            "performance",
+            "ux",
+            "reliability",
+            "cost",
+        ]
         for area in expected:
             assert area in FOCUS_AREAS
 
