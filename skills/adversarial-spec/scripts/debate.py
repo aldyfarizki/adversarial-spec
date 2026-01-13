@@ -72,6 +72,7 @@ from models import (  # noqa: E402
     extract_tasks,
     generate_diff,
     get_critique_summary,
+    is_o_series_model,
     load_context_files,
 )
 from prompts import EXPORT_TASKS_PROMPT, get_doc_type_name  # noqa: E402
@@ -700,12 +701,18 @@ def handle_export_tasks(args: argparse.Namespace, models: list[str]) -> None:
     prompt = EXPORT_TASKS_PROMPT.format(doc_type_name=doc_type_name, spec=spec)
 
     try:
-        response = completion(
-            model=models[0],
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=8000,
-        )
+        # Build completion kwargs
+        completion_kwargs = {
+            "model": models[0],
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 8000,
+        }
+
+        # O-series models don't support custom temperature
+        if not is_o_series_model(models[0]):
+            completion_kwargs["temperature"] = 0.3
+
+        response = completion(**completion_kwargs)
         content = response.choices[0].message.content
         tasks = extract_tasks(content)
 

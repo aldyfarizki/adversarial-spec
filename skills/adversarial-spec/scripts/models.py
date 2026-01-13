@@ -46,6 +46,23 @@ MAX_RETRIES = 3
 RETRY_BASE_DELAY = 1.0  # seconds
 
 
+def is_o_series_model(model: str) -> bool:
+    """
+    Check if a model is an OpenAI O-series model.
+
+    O-series models (o1, o1-mini, o1-preview) don't support custom temperature.
+    They only accept temperature=1 or no temperature parameter.
+
+    Args:
+        model: Model identifier string.
+
+    Returns:
+        True if the model is an O-series model.
+    """
+    model_lower = model.lower()
+    return model_lower.startswith("o1") or "/o1" in model_lower or "-o1" in model_lower
+
+
 @dataclass
 class ModelResponse:
     """Response from a model critique."""
@@ -457,16 +474,22 @@ def call_single_model(
 
     for attempt in range(MAX_RETRIES):
         try:
-            response = completion(
-                model=actual_model,
-                messages=[
+            # Build completion kwargs
+            completion_kwargs = {
+                "model": actual_model,
+                "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message},
                 ],
-                temperature=0.7,
-                max_tokens=8000,
-                timeout=timeout,
-            )
+                "max_tokens": 8000,
+                "timeout": timeout,
+            }
+
+            # O-series models don't support custom temperature
+            if not is_o_series_model(actual_model):
+                completion_kwargs["temperature"] = 0.7
+
+            response = completion(**completion_kwargs)
             content = response.choices[0].message.content
             agreed = "[AGREE]" in content
             extracted = extract_spec(content)

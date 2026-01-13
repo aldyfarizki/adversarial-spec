@@ -20,6 +20,7 @@ from models import (
     extract_tasks,
     generate_diff,
     get_critique_summary,
+    is_o_series_model,
     load_context_files,
 )
 
@@ -974,3 +975,41 @@ class TestConstants:
     def test_retry_base_delay_is_positive(self):
         # Mutation: 1.0 -> 2.0 would be caught
         assert RETRY_BASE_DELAY == 1.0
+
+
+class TestIsOSeriesModel:
+    """Test detection of OpenAI O-series models."""
+
+    def test_detects_o1(self):
+        assert is_o_series_model("o1") is True
+
+    def test_detects_o1_mini(self):
+        assert is_o_series_model("o1-mini") is True
+
+    def test_detects_o1_preview(self):
+        assert is_o_series_model("o1-preview") is True
+
+    def test_detects_o1_with_provider_prefix(self):
+        assert is_o_series_model("openai/o1") is True
+
+    def test_detects_o1_via_openrouter(self):
+        assert is_o_series_model("openrouter/openai/o1-mini") is True
+
+    def test_case_insensitive(self):
+        assert is_o_series_model("O1") is True
+        assert is_o_series_model("O1-MINI") is True
+
+    def test_does_not_detect_gpt4o(self):
+        assert is_o_series_model("gpt-4o") is False
+
+    def test_does_not_detect_gpt4o_mini(self):
+        assert is_o_series_model("gpt-4o-mini") is False
+
+    def test_does_not_detect_claude(self):
+        assert is_o_series_model("claude-sonnet-4-20250514") is False
+
+    def test_does_not_detect_gemini(self):
+        assert is_o_series_model("gemini/gemini-2.0-flash") is False
+
+    def test_does_not_detect_empty_string(self):
+        assert is_o_series_model("") is False
