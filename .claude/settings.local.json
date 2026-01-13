@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(grep:*)",
+      "Bash(for file in skills/adversarial-spec/scripts/{debate,models,prompts,providers,session,telegram_bot}.py)",
+      "Bash(do if ! head -5 \"$file\")",
+      "Bash(then echo \"Adding future import to $file\" fi done)",
+      "Bash(for file in skills/adversarial-spec/scripts/{debate,models,prompts,providers,session}.py)",
+      "Bash(do echo \"=== $file ===\" head -30 \"$file\")",
+      "Bash(ls:*)"
+    ]
+  }
+}

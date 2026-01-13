@@ -561,18 +561,44 @@ def parse_models(args: argparse.Namespace) -> list[str]:
     if args.models is None:
         default_model = get_default_model()
         if default_model is None:
-            print("Error: No API keys configured and no models specified.", file=sys.stderr)
+            print(
+                "Error: No API keys configured and no models specified.",
+                file=sys.stderr,
+            )
             print("\nAvailable providers:", file=sys.stderr)
-            print("  OpenAI:    Set OPENAI_API_KEY for gpt-4o, o1, etc.", file=sys.stderr)
-            print("  Anthropic: Set ANTHROPIC_API_KEY for claude-sonnet-4-20250514, etc.", file=sys.stderr)
-            print("  Google:    Set GEMINI_API_KEY for gemini/gemini-2.0-flash, etc.", file=sys.stderr)
+            print(
+                "  OpenAI:    Set OPENAI_API_KEY for gpt-4o, o1, etc.", file=sys.stderr
+            )
+            print(
+                "  Anthropic: Set ANTHROPIC_API_KEY for claude-sonnet-4-20250514, etc.",
+                file=sys.stderr,
+            )
+            print(
+                "  Google:    Set GEMINI_API_KEY for gemini/gemini-2.0-flash, etc.",
+                file=sys.stderr,
+            )
             print("  xAI:       Set XAI_API_KEY for xai/grok-3, etc.", file=sys.stderr)
-            print("  Mistral:   Set MISTRAL_API_KEY for mistral/mistral-large, etc.", file=sys.stderr)
-            print("  Groq:      Set GROQ_API_KEY for groq/llama-3.3-70b-versatile, etc.", file=sys.stderr)
-            print("  Deepseek:  Set DEEPSEEK_API_KEY for deepseek/deepseek-chat, etc.", file=sys.stderr)
-            print("  Zhipu:     Set ZHIPUAI_API_KEY for zhipu/glm-4, etc.", file=sys.stderr)
+            print(
+                "  Mistral:   Set MISTRAL_API_KEY for mistral/mistral-large, etc.",
+                file=sys.stderr,
+            )
+            print(
+                "  Groq:      Set GROQ_API_KEY for groq/llama-3.3-70b-versatile, etc.",
+                file=sys.stderr,
+            )
+            print(
+                "  Deepseek:  Set DEEPSEEK_API_KEY for deepseek/deepseek-chat, etc.",
+                file=sys.stderr,
+            )
+            print(
+                "  Zhipu:     Set ZHIPUAI_API_KEY for zhipu/glm-4, etc.",
+                file=sys.stderr,
+            )
             print("\nOr specify models explicitly: --models gpt-4o", file=sys.stderr)
-            print("\nRun 'python3 debate.py providers' to see which keys are set.", file=sys.stderr)
+            print(
+                "\nRun 'python3 debate.py providers' to see which keys are set.",
+                file=sys.stderr,
+            )
             sys.exit(2)
         args.models = default_model
 
@@ -974,11 +1000,17 @@ def validate_models_before_run(models: list[str], bedrock_mode: bool) -> None:
             elif model.startswith("zhipu/"):
                 print(f"  - {model} (requires ZHIPUAI_API_KEY)", file=sys.stderr)
             elif model.startswith("codex/"):
-                print(f"  - {model} (requires Codex CLI: npm install -g @openai/codex && codex login)", file=sys.stderr)
+                print(
+                    f"  - {model} (requires Codex CLI: npm install -g @openai/codex && codex login)",
+                    file=sys.stderr,
+                )
             else:
                 print(f"  - {model} (unknown provider)", file=sys.stderr)
 
-        print("\nRun 'python3 debate.py providers' to see which API keys are configured.", file=sys.stderr)
+        print(
+            "\nRun 'python3 debate.py providers' to see which API keys are configured.",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
 

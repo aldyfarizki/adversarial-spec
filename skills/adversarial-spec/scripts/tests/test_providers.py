@@ -691,14 +691,19 @@ class TestHandleBedrockCommand:
             handle_bedrock_command("unknown", None, None)
         assert exc_info.value.code == 1
 
+
 class TestGetAvailableProviders:
     def test_returns_providers_with_keys_set(self):
         from providers import get_available_providers
 
-        with patch.dict("os.environ", {
-            "OPENAI_API_KEY": "test-key",
-            "ANTHROPIC_API_KEY": "test-key",
-        }, clear=False):
+        with patch.dict(
+            "os.environ",
+            {
+                "OPENAI_API_KEY": "test-key",
+                "ANTHROPIC_API_KEY": "test-key",
+            },
+            clear=False,
+        ):
             available = get_available_providers()
             provider_names = [name for name, _, _ in available]
             assert "OpenAI" in provider_names
@@ -707,9 +712,13 @@ class TestGetAvailableProviders:
     def test_excludes_providers_without_keys(self):
         from providers import get_available_providers
 
-        with patch.dict("os.environ", {
-            "OPENAI_API_KEY": "test-key",
-        }, clear=True):
+        with patch.dict(
+            "os.environ",
+            {
+                "OPENAI_API_KEY": "test-key",
+            },
+            clear=True,
+        ):
             available = get_available_providers()
             provider_names = [name for name, _, _ in available]
             assert "OpenAI" in provider_names
@@ -774,15 +783,17 @@ class TestValidateModelCredentials:
     def test_validates_mixed_providers(self):
         from providers import validate_model_credentials
 
-        with patch.dict("os.environ", {
-            "OPENAI_API_KEY": "test-key",
-            "XAI_API_KEY": "test-key",
-        }, clear=True):
-            valid, invalid = validate_model_credentials([
-                "gpt-4o",
-                "xai/grok-3",
-                "gemini/gemini-2.0-flash"
-            ])
+        with patch.dict(
+            "os.environ",
+            {
+                "OPENAI_API_KEY": "test-key",
+                "XAI_API_KEY": "test-key",
+            },
+            clear=True,
+        ):
+            valid, invalid = validate_model_credentials(
+                ["gpt-4o", "xai/grok-3", "gemini/gemini-2.0-flash"]
+            )
             assert "gpt-4o" in valid
             assert "xai/grok-3" in valid
             assert "gemini/gemini-2.0-flash" in invalid
