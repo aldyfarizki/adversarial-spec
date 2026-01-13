@@ -45,10 +45,12 @@ import os
 import sys
 import argparse
 import json
+import warnings
 from pathlib import Path
 from datetime import datetime
 from typing import Any, Optional
 
+warnings.filterwarnings("ignore", message="Pydantic serializer warnings")
 os.environ["LITELLM_LOG"] = "ERROR"
 
 try:
